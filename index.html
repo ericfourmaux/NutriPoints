@@ -1,156 +1,207 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark" data-accent="green">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NutriPoints - Suivi Alimentaire & Points</title>
-    <!-- Bibliothèque ZXing pour le décodage de code-barres -->
+    <title>NutriPoints — Scanner & Suivi Nutritionnel Avancé</title>
+
+    <!-- Police Google Fonts : Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bibliothèques de scan (html5-qrcode & ZXing) -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
+
     <style>
+        /* ==========================================================================
+           1. FONDATIONS CSS & DESIGN SYSTEM (1rem = 10px, WCAG AA/AAA)
+           ========================================================================== */
         :root {
-            --primary: #10b981;
-            --primary-hover: #059669;
-            --primary-light: #d1fae5;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 0.8rem;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            font-size: 62.5%; /* 1rem = 10px exactement */
+            
+            --bg-app: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-surface-alt: #f8fafc;
+            --bg-input: #ffffff;
+            --border-color: #cbd5e1;
+            --border-subtle: #e2e8f0;
+            
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #475569;
+            
+            --brand-primary: #15803d;
+            --brand-primary-hover: #166534;
+            --brand-light: #dcfce7;
+            --brand-text: #14532d;
+            
+            --accent-blue: #0369a1;
+            --accent-blue-light: #e0f2fe;
+            --danger-color: #b91c1c;
+            --danger-light: #fee2e2;
+            
+            --shadow-sm: 0 0.1rem 0.3rem rgba(15, 23, 42, 0.08);
+            --shadow-md: 0 0.4rem 1.2rem rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 1.2rem 2.8rem rgba(15, 23, 42, 0.18);
+            
+            --radius-sm: 0.8rem;
+            --radius-md: 1.2rem;
+            --radius-lg: 1.8rem;
+            --radius-full: 999.9rem;
+            
+            --focus-ring: 0 0 0 0.3rem rgba(21, 128, 61, 0.45);
         }
 
         [data-theme="dark"] {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
+            --bg-app: #0b1120;
+            --bg-surface: #1e293b;
+            --bg-surface-alt: #0f172a;
+            --bg-input: #0f172a;
+            --border-color: #475569;
+            --border-subtle: #334155;
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #e2e8f0;
             --text-muted: #94a3b8;
-            --border: #334155;
-            --primary-light: rgba(16, 185, 129, 0.15);
+            
+            --brand-primary: #22c55e;
+            --brand-primary-hover: #4ade80;
+            --brand-light: rgba(34, 197, 94, 0.18);
+            --brand-text: #86efac;
+            
+            --accent-blue: #38bdf8;
+            --accent-blue-light: rgba(56, 189, 248, 0.18);
+            --danger-color: #f87171;
+            --danger-light: rgba(248, 113, 113, 0.18);
+            
+            --shadow-sm: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 1.2rem 2.8rem rgba(0, 0, 0, 0.55);
+            --focus-ring: 0 0 0 0.3rem rgba(74, 222, 128, 0.5);
         }
 
-        /* Thèmes de couleur personnalisés */
-        [data-accent="green"] { --primary: #10b981; --primary-hover: #059669; --primary-light: #d1fae5; }
-        [data-accent="pink"]  { --primary: #ec4899; --primary-hover: #db2777; --primary-light: #fce7f3; }
-        [data-accent="blue"]  { --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe; }
+        /* Thèmes d'accentuation */
+        [data-accent="green"]  { --brand-primary: #15803d; --brand-primary-hover: #166534; --brand-light: #dcfce7; --brand-text: #14532d; }
+        [data-accent="pink"]   { --brand-primary: #db2777; --brand-primary-hover: #be185d; --brand-light: #fce7f3; --brand-text: #831843; }
+        [data-accent="blue"]   { --brand-primary: #2563eb; --brand-primary-hover: #1d4ed8; --brand-light: #dbeafe; --brand-text: #1e40af; }
 
-        [data-theme="dark"][data-accent="pink"]  { --primary-light: rgba(236, 72, 153, 0.15); }
-        [data-theme="dark"][data-accent="blue"]  { --primary-light: rgba(59, 130, 246, 0.15); }
-
-        html {
-            font-size: 62.5%; /* 1rem = 10px */
-            box-sizing: border-box;
-        }
+        [data-theme="dark"][data-accent="green"] { --brand-primary: #22c55e; --brand-primary-hover: #4ade80; --brand-light: rgba(34, 197, 94, 0.18); --brand-text: #86efac; }
+        [data-theme="dark"][data-accent="pink"]  { --brand-primary: #ec4899; --brand-primary-hover: #f472b6; --brand-light: rgba(236, 72, 153, 0.18); --brand-text: #fbcfe8; }
+        [data-theme="dark"][data-accent="blue"]  { --brand-primary: #3b82f6; --brand-primary-hover: #60a5fa; --brand-light: rgba(59, 130, 246, 0.18); --brand-text: #bfdbfe; }
 
         *, *::before, *::after {
-            box-sizing: inherit;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 1.6rem;
             line-height: 1.5;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
 
-        header {
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        :focus-visible {
+            outline: 0.2rem solid var(--brand-primary);
+            outline-offset: 0.2rem;
+            box-shadow: var(--focus-ring);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 0.1rem; height: 0.1rem; padding: 0; margin: -0.1rem; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ==========================================================================
+           2. EN-TÊTE & NAVIGATION INFÉRIEURE
+           ========================================================================== */
+        .app-header {
+            background-color: var(--bg-surface);
+            border-bottom: 0.1rem solid var(--border-subtle);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 40;
+            box-shadow: var(--shadow-sm);
         }
 
-        h1 {
-            font-size: 2.2rem;
-            margin: 0;
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        .header-controls {
+        .header-inner {
+            max-width: 112rem;
+            margin: 0 auto;
+            padding: 1.2rem 1.6rem;
             display: flex;
-            gap: 1rem;
             align-items: center;
+            justify-content: space-between;
+            gap: 1.2rem;
         }
 
-        button, .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.6rem;
-            border-radius: var(--radius);
-            font-size: 1.4rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: inline-flex;
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .logo-badge {
+            width: 4.2rem;
+            height: 4.2rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+            color: #ffffff;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.8rem;
-            text-decoration: none;
+            flex-shrink: 0;
+            box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.15);
         }
 
-        button:hover, .btn:hover {
-            background-color: var(--primary-hover);
+        .brand-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
         }
 
-        button:active {
-            transform: scale(0.98);
-        }
+        .brand-title span { color: var(--brand-primary); }
+        .brand-subtitle { font-size: 1.2rem; color: var(--text-muted); font-weight: 500; }
 
-        button.secondary, .btn.secondary {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-        }
+        .header-actions { display: flex; align-items: center; gap: 0.8rem; }
 
-        button.secondary:hover {
-            background-color: var(--border);
-        }
-
-        main {
-            max-width: 800px;
+        .main-container {
+            max-width: 112rem;
+            width: 100%;
             margin: 0 auto;
-            padding: 2rem 1.5rem 8rem 1.5rem;
+            padding: 2rem 1.6rem 9rem 1.6rem; /* Espace pour la barre fixe du bas */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2.4rem;
         }
 
-        .tab-content {
-            display: none;
-        }
+        .tab-content { display: none; flex-direction: column; gap: 2.4rem; }
+        .tab-content.active { display: flex; }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        /* Navigation par onglets inférieure */
+        /* Barre de navigation inférieure */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: var(--bg-card);
-            border-top: 1px solid var(--border);
+            background-color: var(--bg-surface);
+            border-top: 0.1rem solid var(--border-subtle);
             display: flex;
             justify-content: space-around;
-            padding: 1rem 0;
-            z-index: 100;
+            padding: 0.8rem 0;
+            z-index: 50;
+            box-shadow: 0 -0.4rem 1.2rem rgba(0,0,0,0.06);
         }
 
         .nav-item {
@@ -158,321 +209,294 @@
             border: none;
             color: var(--text-muted);
             font-size: 1.2rem;
+            font-family: inherit;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.4rem;
             cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            transition: color 0.2s;
         }
 
         .nav-item.active {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .nav-item svg {
-            width: 2.2rem;
-            height: 2.2rem;
-            fill: currentColor;
-        }
-
-        /* Dashboard */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .date-selector {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-weight: 600;
-        }
-
-        .points-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-card {
-            background: var(--primary-light);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .metric-card h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.4rem;
-            color: var(--text-muted);
-        }
-
-        .metric-card .value {
-            font-size: 2.8rem;
+            color: var(--brand-primary);
             font-weight: 700;
-            color: var(--primary);
         }
 
-        /* Barres de progression macros */
-        .macro-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1.5rem;
+        .nav-item svg { width: 2.2rem; height: 2.2rem; fill: currentColor; }
+
+        /* ==========================================================================
+           3. CARTES, FORMULAIRES & BOUTONS
+           ========================================================================== */
+        .card {
+            background-color: var(--bg-surface);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
         }
 
-        .macro-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .macro-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.4rem;
-            color: var(--text-muted);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 1rem;
-            background-color: var(--border);
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* Formulaires & Inputs */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 1.4rem;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            font-size: 1.6rem;
-        }
-
-        input:focus, select:focus {
-            outline: 2px solid var(--primary);
-        }
-
-        /* Scanner */
-        #scanner-container {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto 1.5rem auto;
-            position: relative;
-            background: #000;
-            border-radius: var(--radius);
-            overflow: hidden;
-            display: none;
-        }
-
-        #scanner-video {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-        }
-
-        /* Listes */
-        .food-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .food-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.2rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .food-item:last-child {
-            border-bottom: none;
-        }
-
-        .food-info h4 {
-            margin: 0 0 0.3rem 0;
-            font-size: 1.6rem;
-        }
-
-        .food-info p {
-            margin: 0;
-            font-size: 1.3rem;
-            color: var(--text-muted);
-        }
-
-        .food-actions {
+        .card-header {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            justify-content: space-between;
+            gap: 1.2rem;
+            margin-bottom: 1.6rem;
         }
 
-        .badge {
-            background-color: var(--primary-light);
-            color: var(--primary);
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
+        .card-title {
+            font-size: 1.8rem;
             font-weight: 700;
-            font-size: 1.4rem;
-        }
-
-        /* Calendrier Heatmap & Graphiques */
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            display: flex;
+            align-items: center;
             gap: 0.8rem;
-            margin-top: 1rem;
+            color: var(--text-primary);
         }
 
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            min-height: 4.2rem;
+            padding: 0.9rem 1.6rem;
+            font-family: inherit;
+            font-size: 1.4rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 0.1rem solid transparent;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-decoration: none;
+        }
+
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-primary { background-color: var(--brand-primary); color: #ffffff; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--brand-primary-hover); transform: translateY(-0.1rem); }
+        .btn-secondary { background-color: var(--bg-surface-alt); color: var(--text-primary); border-color: var(--border-color); }
+        .btn-secondary:hover:not(:disabled) { background-color: var(--border-subtle); }
+        .btn-danger { background-color: var(--danger-light); color: var(--danger-color); border-color: transparent; }
+        .btn-danger:hover:not(:disabled) { filter: brightness(0.95); }
+        .btn-sm { min-height: 3.4rem; padding: 0.5rem 1.1rem; font-size: 1.3rem; border-radius: var(--radius-sm); }
+        .btn-icon { width: 4.2rem; padding: 0; }
+        .btn-full { width: 100%; }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.4rem; }
+        .form-label { font-size: 1.4rem; font-weight: 600; color: var(--text-secondary); }
+        .form-input, select {
+            width: 100%; min-height: 4.4rem; padding: 0.9rem 1.4rem; font-family: inherit; font-size: 1.5rem;
+            color: var(--text-primary); background-color: var(--bg-input); border: 0.15rem solid var(--border-color);
+            border-radius: var(--radius-md); transition: border-color 0.2s ease;
+        }
+        .form-input:focus, select:focus { border-color: var(--brand-primary); outline: none; }
+        .row { display: flex; gap: 1.2rem; }
+        .row .form-group { flex: 1; }
+
+        /* ==========================================================================
+           4. TABLEAU DE BORD & JAUGE
+           ========================================================================== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.4rem;
+        }
+        @media(min-width: 900px) {
+            .dashboard-grid { grid-template-columns: 5fr 7fr; align-items: start; }
+        }
+
+        .dashboard-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+        @media (min-width: 680px) {
+            .dashboard-card { grid-template-columns: auto 1fr; padding: 2.4rem; }
+        }
+
+        .gauge-wrapper {
+            position: relative; width: 16rem; height: 16rem; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .gauge-bg { fill: none; stroke: var(--border-subtle); stroke-width: 1.4; }
+        .gauge-fill {
+            fill: none; stroke: var(--brand-primary); stroke-width: 1.4; stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .gauge-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.2rem; }
+        .gauge-remaining-val { font-size: 3.4rem; font-weight: 800; line-height: 1; color: var(--text-primary); }
+        .gauge-remaining-label { font-size: 1.2rem; font-weight: 600; color: var(--text-muted); margin-top: 0.4rem; }
+
+        .date-nav-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background-color: var(--bg-surface-alt); border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md); padding: 0.6rem;
+        }
+        .current-date-label { font-size: 1.5rem; font-weight: 700; text-transform: capitalize; text-align: center; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+        .stat-box { background-color: var(--bg-surface-alt); border: 0.1rem solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.2rem; }
+        .stat-label { font-size: 1.2rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.4rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; }
+
+        /* Barres macros */
+        .macro-bars { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .macro-item { display: flex; flex-direction: column; gap: 0.4rem; }
+        .macro-label { display: flex; justify-content: space-between; font-size: 1.4rem; color: var(--text-muted); }
+        .progress-bar { width: 100%; height: 1rem; background-color: var(--border-subtle); border-radius: 0.5rem; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: var(--brand-primary); width: 0%; transition: width 0.3s ease; }
+
+        /* Listes d'aliments */
+        .food-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
+        .food-item {
+            display: flex; justify-content: space-between; align-items: center; gap: 1.2rem;
+            padding: 1.2rem 1.4rem; background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle); border-radius: var(--radius-md);
+        }
+        .food-info h4 { margin: 0 0 0.3rem 0; font-size: 1.5rem; font-weight: 700; }
+        .food-info p { margin: 0; font-size: 1.2rem; color: var(--text-muted); }
+        .food-actions { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+        .badge { background-color: var(--brand-light); color: var(--brand-text); padding: 0.4rem 1rem; border-radius: 2rem; font-weight: 800; font-size: 1.3rem; }
+
+        /* ==========================================================================
+           5. SCANNER & CALCULATEUR LIBRE
+           ========================================================================== */
+        #scanner-container {
+            width: 100%; max-width: 500px; margin: 0 auto 1.5rem auto; position: relative;
+            background: #000; border-radius: var(--radius-md); overflow: hidden; display: none;
+        }
+        #scanner-video { width: 100%; height: 260px; object-fit: cover; }
+
+        .nutrients-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 1.6rem 0;
+        }
+        @media(min-width: 540px) { .nutrients-grid { grid-template-columns: repeat(4, 1fr); } }
+        .nutrient-cell { background-color: var(--bg-surface-alt); border: 0.1rem solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.8rem; text-align: center; }
+        .nutrient-name { display: block; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .nutrient-val { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+
+        /* ==========================================================================
+           6. BILAN MENSUEL & HEATMAP
+           ========================================================================== */
+        .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.8rem; margin-top: 1rem; }
         .heatmap-day {
-            aspect-ratio: 1;
-            background: var(--border);
-            border-radius: 0.6rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
+            aspect-ratio: 1; background: var(--bg-surface-alt); border: 1px solid var(--border-subtle);
+            border-radius: 0.6rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-muted);
         }
+        .heatmap-day.active-day { background: var(--brand-light); border-color: var(--brand-primary); color: var(--brand-text); font-weight: bold; }
 
-        .heatmap-day.active-day {
-            background: var(--primary-light);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        /* Modal */
+        /* Modale universelle */
         .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(0.3rem);
+            display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--bg-surface); padding: 2.4rem; border-radius: var(--radius-lg); width: 90%; max-width: 450px; box-shadow: var(--shadow-lg); }
 
-        .modal.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            padding: 2.5rem;
-            border-radius: var(--radius);
-            width: 90%;
-            max-width: 450px;
-            box-shadow: var(--shadow);
-        }
-
-        .row {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .row .form-group {
-            flex: 1;
-        }
+        .toast-container { position: fixed; bottom: 8rem; right: 2rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.8rem; max-width: 36rem; width: calc(100% - 4rem); pointer-events: none; }
+        .toast { background-color: #0f172a; color: #fff; padding: 1.2rem 1.6rem; border-radius: var(--radius-md); font-size: 1.4rem; font-weight: 600; box-shadow: var(--shadow-lg); border-left: 0.5rem solid var(--brand-primary); pointer-events: auto; }
+        .toast-error { border-left-color: #ef4444; }
     </style>
 </head>
-<body data-theme="dark" data-accent="green">
+<body>
 
-    <header>
-        <h1 id="app-title">NutriPoints</h1>
-        <div class="header-controls">
-            <button class="secondary" id="btn-theme" title="Changer de thème clair/sombre">🌓</button>
+    <!-- Notifications Toast ARIA Live -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- EN-TÊTE -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand-logo">
+                <div class="logo-badge" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Nutri<span>Points</span></h1>
+                    <p class="brand-subtitle">Scanner & Équilibre Quotidien</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary btn-sm" id="btn-theme" aria-label="Changer de thème">🌓 Thème</button>
+            </div>
         </div>
     </header>
 
-    <main>
-        <!-- ONGLET 1 : DASHBOARD & SUIVI QUOTIDIEN -->
+    <!-- CONTENU PRINCIPAL -->
+    <main class="main-container">
+
+        <!-- ONGLET 1 : TABLEAU DE BORD & JOURNAL -->
         <section id="tab-dashboard" class="tab-content active">
-            <div class="card">
-                <div class="dashboard-header">
-                    <div>
-                        <h2 id="welcome-msg" style="margin:0 0 0.5rem 0; font-size:2rem;">Bonjour !</h2>
-                        <div class="date-selector">
-                            <button class="secondary" id="prev-day" style="padding:0.4rem 0.8rem;">◀</button>
-                            <span id="current-date-label">Aujourd'hui</span>
-                            <button class="secondary" id="next-day" style="padding:0.4rem 0.8rem;">▶</button>
+            <div class="card dashboard-card">
+                <!-- Jauge Circulaire SVG -->
+                <div class="gauge-wrapper" role="img" aria-label="Jauge de points restants">
+                    <svg class="gauge-svg" viewBox="0 0 120 120">
+                        <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                        <circle id="gauge-progress-circle" class="gauge-fill" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="gauge-center">
+                        <span id="remaining-points-val" class="gauge-remaining-val">30</span>
+                        <span class="gauge-remaining-label" id="budget-info">pts restants</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-details" style="display:flex; flex-direction:column; gap:1.6rem; width:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 id="welcome-msg" style="font-size:1.9rem; margin:0;">Bonjour !</h2>
+                        <button id="btn-open-settings-modal" class="btn btn-secondary btn-sm">⚙️ Réglage Capital</button>
+                    </div>
+
+                    <!-- Sélecteur de date -->
+                    <div class="date-nav-bar">
+                        <button class="btn btn-secondary btn-icon btn-sm" id="prev-day" aria-label="Jour précédent">◀</button>
+                        <span id="current-date-label" class="current-date-label">Aujourd'hui</span>
+                        <button class="btn btn-secondary btn-icon btn-sm" id="next-day" aria-label="Jour suivant">▶</button>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <span class="stat-label">Consommé</span>
+                            <span class="stat-value"><span id="stat-consumed">0</span> <small style="font-size:1.2rem;color:var(--text-muted)">pts</small></span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Calories</span>
+                            <span class="stat-value" id="total-calories-val" style="font-size:1.7rem;">0 kcal</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Objectif kcal</span>
+                            <span class="stat-value" id="target-calories-info" style="font-size:1.7rem;">2000</span>
                         </div>
                     </div>
-                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem;">⚙️ Capital</button>
-                </div>
 
-                <div class="points-summary-grid">
-                    <div class="metric-card">
-                        <h3>Points Restants</h3>
-                        <div class="value" id="remaining-points-val">30</div>
-                        <span style="font-size:1.3rem; color:var(--text-muted);" id="budget-info">sur 30 pts</span>
-                    </div>
-                    <div class="metric-card" style="background:var(--border);">
-                        <h3>Calories du jour</h3>
-                        <div class="value" id="total-calories-val" style="color:var(--text-main);">0 kcal</div>
-                        <span style="font-size:1.3rem; color:var(--text-muted);" id="target-calories-info">Objectif: 2000 kcal</span>
-                    </div>
-                </div>
-
-                <div class="macro-bars">
-                    <div class="macro-item">
-                        <div class="macro-label"><span>Protéines</span><span id="macro-p-val">0g</span></div>
-                        <div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#3b82f6;"></div></div>
-                    </div>
-                    <div class="macro-item">
-                        <div class="macro-label"><span>Glucides</span><span id="macro-g-val">0g</span></div>
-                        <div class="progress-bar"><div class="progress-fill" id="bar-g" style="background:#f59e0b;"></div></div>
-                    </div>
-                    <div class="macro-item">
-                        <div class="macro-label"><span>Lipides</span><span id="macro-l-val">0g</span></div>
-                        <div class="progress-bar"><div class="progress-fill" id="bar-l" style="background:#ef4444;"></div></div>
-                    </div>
-                    <div class="macro-item">
-                        <div class="macro-label"><span>Fibres</span><span id="macro-f-val">0g</span></div>
-                        <div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#10b981;"></div></div>
+                    <div class="macro-bars">
+                        <div class="macro-item">
+                            <div class="macro-label"><span>Protéines</span><span id="macro-p-val">0g</span></div>
+                            <div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#3b82f6;"></div></div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-label"><span>Glucides</span><span id="macro-g-val">0g</span></div>
+                            <div class="progress-bar"><div class="progress-fill" id="bar-g" style="background:#f59e0b;"></div></div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-label"><span>Lipides</span><span id="macro-l-val">0g</span></div>
+                            <div class="progress-bar"><div class="progress-fill" id="bar-l" style="background:#ef4444;"></div></div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-label"><span>Fibres</span><span id="macro-f-val">0g</span></div>
+                            <div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#10b981;"></div></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h3 style="margin:0;">Aliments consommés</h3>
-                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter un aliment</button>
+                <div class="card-header">
+                    <h3 class="card-title">Aliments consommés</h3>
+                    <button class="btn btn-primary btn-sm" id="btn-goto-scanner">➕ Ajouter un aliment</button>
                 </div>
                 <ul class="food-list" id="daily-food-list">
                     <li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>
@@ -483,130 +507,156 @@
         <!-- ONGLET 2 : SCANNER & CALCULATEUR -->
         <section id="tab-scanner" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;">Scanner ou Rechercher un aliment</h2>
+                <h2 class="card-title" style="margin-bottom:1.6rem;">Scanner ou Rechercher un aliment</h2>
                 
                 <div id="scanner-container">
                     <video id="scanner-video" playsinline muted autoplay></video>
                 </div>
 
                 <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-                    <button id="btn-start-scanner">📷 Démarrer la caméra</button>
-                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter la caméra</button>
-                    <label class="btn secondary" style="cursor:pointer; margin:0;">
+                    <button class="btn btn-primary" id="btn-start-scanner">📷 Démarrer la caméra</button>
+                    <button class="btn btn-danger" id="btn-stop-scanner" style="display:none;">Arrêter la caméra</button>
+                    <label class="btn btn-secondary" style="cursor:pointer; margin:0;">
                         📁 Importer une photo code-barres
                         <input type="file" id="barcode-file-input" accept="image/*" style="display:none;">
                     </label>
                 </div>
 
                 <div class="form-group">
-                    <label for="manual-barcode">Ou saisir le code-barres (EAN/UPC)</label>
+                    <label for="manual-barcode" class="form-label">Ou saisir le code-barres (EAN/UPC)</label>
                     <div style="display:flex; gap:1rem;">
-                        <input type="text" id="manual-barcode" placeholder="Ex: 3017620422003">
-                        <button id="btn-search-barcode">Rechercher</button>
+                        <input type="text" id="manual-barcode" class="form-input" placeholder="Ex: 3017620422003" inputmode="numeric">
+                        <button class="btn btn-primary" id="btn-search-barcode">Rechercher</button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Calculateur & Saisie manuelle libre</h3>
+                <h3 class="card-title" style="margin-bottom:1.6rem;">Calculateur & Saisie manuelle libre</h3>
                 <div class="form-group">
-                    <label for="manual-name">Nom du produit / plat</label>
-                    <input type="text" id="manual-name" placeholder="Ex: Yaourt nature, Poulet grillé...">
+                    <label for="manual-name" class="form-label">Nom du produit / plat</label>
+                    <input type="text" id="manual-name" class="form-input" placeholder="Ex: Yaourt nature, Poulet grillé...">
                 </div>
                 <div class="row">
                     <div class="form-group">
-                        <label for="manual-calories">Calories (kcal / 100g)</label>
-                        <input type="number" id="manual-calories" value="150">
+                        <label for="manual-calories" class="form-label">Calories (kcal / 100g)</label>
+                        <input type="number" id="manual-calories" class="form-input" value="150" min="0">
                     </div>
                     <div class="form-group">
-                        <label for="manual-proteins">Protéines (g)</label>
-                        <input type="number" id="manual-proteins" value="10">
+                        <label for="manual-proteins" class="form-label">Protéines (g)</label>
+                        <input type="number" id="manual-proteins" class="form-input" value="10" min="0" step="any">
                     </div>
                 </div>
                 <div class="row">
                     <div class="form-group">
-                        <label for="manual-carbs">Glucides (g)</label>
-                        <input type="number" id="manual-carbs" value="15">
+                        <label for="manual-carbs" class="form-label">Glucides (g)</label>
+                        <input type="number" id="manual-carbs" class="form-input" value="15" min="0" step="any">
                     </div>
                     <div class="form-group">
-                        <label for="manual-fats">Lipides (g)</label>
-                        <input type="number" id="manual-fats" value="5">
+                        <label for="manual-fats" class="form-label">Lipides (g)</label>
+                        <input type="number" id="manual-fats" class="form-input" value="5" min="0" step="any">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="manual-fibers">Fibres (g)</label>
-                    <input type="number" id="manual-fibers" value="2">
-                </div>
-                <div class="form-group">
-                    <label for="manual-serving">Quantité consommée (g ou ml)</label>
-                    <input type="number" id="manual-serving" value="100">
-                </div>
-
-                <div style="background:var(--primary-light); padding:1.2rem; border-radius:var(--radius); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:600;">Points calculés pour cette portion :</span>
-                    <span id="preview-calculated-points" style="font-size:2rem; font-weight:700; color:var(--primary);">4 pts</span>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="manual-fibers" class="form-label">Fibres (g)</label>
+                        <input type="number" id="manual-fibers" class="form-input" value="2" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-serving" class="form-label">Quantité portion (g/ml)</label>
+                        <input type="number" id="manual-serving" class="form-input" value="100" min="1">
+                    </div>
                 </div>
 
-                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal du jour</button>
+                <div style="background:var(--brand-light); padding:1.4rem; border-radius:var(--radius-md); margin-bottom:1.6rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:700; color:var(--brand-text);">Points calculés pour cette portion :</span>
+                    <span id="preview-calculated-points" style="font-size:2.2rem; font-weight:800; color:var(--brand-text);">4 pts</span>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="btn-add-to-journal">Ajouter au journal du jour</button>
             </div>
         </section>
 
-        <!-- ONGLET 3 : PROFIL & OBJECTIFS -->
+        <!-- ONGLET 3 : PROFIL & OBJECTIFS (AVEC UNITÉS MÉTRIQUE / IMPÉRIAL) -->
         <section id="tab-profile" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;">Personnalisation & Apparence</h2>
+                <h2 class="card-title" style="margin-bottom:1.6rem;">Personnalisation & Unités</h2>
                 <div class="form-group">
-                    <label for="input-firstname">Votre Prénom</label>
-                    <input type="text" id="input-firstname" placeholder="Ex: Thomas, Julie...">
+                    <label for="input-firstname" class="form-label">Votre Prénom</label>
+                    <input type="text" id="input-firstname" class="form-input" placeholder="Ex: Thomas, Julie...">
                 </div>
-                <div class="form-group">
-                    <label for="select-accent">Thème de couleur</label>
-                    <select id="select-accent">
-                        <option value="green">Vert (Par défaut)</option>
-                        <option value="pink">Rose</option>
-                        <option value="blue">Bleu</option>
-                    </select>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="select-accent" class="form-label">Thème de couleur</label>
+                        <select id="select-accent" class="form-input">
+                            <option value="green">Vert Forêt</option>
+                            <option value="pink">Rose Vif</option>
+                            <option value="blue">Bleu Océan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="select-unit-system" class="form-label">Système d'unités</label>
+                        <select id="select-unit-system" class="form-input">
+                            <option value="metric">Métrique (kg, cm)</option>
+                            <option value="imperial">Impérial (lbs, pi/po)</option>
+                        </select>
+                    </div>
                 </div>
-                <button id="btn-save-appearance">Enregistrer les préférences</button>
+                <button class="btn btn-primary" id="btn-save-appearance">Enregistrer les préférences</button>
             </div>
 
             <div class="card">
-                <h2 style="margin-top:0;">Calculateur de Profil & Objectifs</h2>
-                <p style="color:var(--text-muted); font-size:1.4rem;">Calculez automatiquement votre capital de points et vos besoins caloriques selon vos caractéristiques physiques (formule Mifflin-St Jeor).</p>
+                <h2 class="card-title" style="margin-bottom:0.8rem;">Calculateur de Profil & Objectifs</h2>
+                <p style="color:var(--text-muted); font-size:1.4rem; margin-bottom:1.6rem;">Calculez automatiquement votre capital de points et vos besoins caloriques via la formule Mifflin-St Jeor.</p>
                 
                 <div class="row">
                     <div class="form-group">
-                        <label for="profile-gender">Genre</label>
-                        <select id="profile-gender">
+                        <label for="profile-gender" class="form-label">Genre</label>
+                        <select id="profile-gender" class="form-input">
                             <option value="male">Homme</option>
                             <option value="female">Femme</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="profile-age">Âge (ans)</label>
-                        <input type="number" id="profile-age" value="45">
+                        <label for="profile-age" class="form-label">Âge (ans)</label>
+                        <input type="number" id="profile-age" class="form-input" value="45">
                     </div>
                 </div>
 
-                <div class="row">
+                <!-- Champs dynamiques selon le système d'unités -->
+                <div class="row" id="height-weight-metric-row">
                     <div class="form-group">
-                        <label for="profile-height">Taille (cm)</label>
-                        <input type="number" id="profile-height" value="175">
+                        <label for="profile-height-cm" class="form-label">Taille (cm)</label>
+                        <input type="number" id="profile-height-cm" class="form-input" value="175">
                     </div>
                     <div class="form-group">
-                        <label for="profile-weight">Poids actuel (kg)</label>
-                        <input type="number" id="profile-weight" value="80">
+                        <label for="profile-weight-kg" class="form-label">Poids actuel (kg)</label>
+                        <input type="number" id="profile-weight-kg" class="form-input" value="80" step="0.1">
+                    </div>
+                </div>
+
+                <div class="row hidden" id="height-weight-imperial-row">
+                    <div class="form-group">
+                        <label class="form-label">Taille (Pieds / Pouces)</label>
+                        <div style="display:flex; gap:0.8rem;">
+                            <input type="number" id="profile-height-ft" class="form-input" placeholder="Pieds" value="5">
+                            <input type="number" id="profile-height-in" class="form-input" placeholder="Pouces" value="9">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-weight-lbs" class="form-label">Poids actuel (lbs)</label>
+                        <input type="number" id="profile-weight-lbs" class="form-input" value="176" step="0.5">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-target-weight">Poids idéal recherché (Cible en kg)</label>
-                    <input type="number" id="profile-target-weight" value="70">
+                    <label for="profile-target-weight" class="form-label" id="label-target-weight">Poids idéal recherché (Cible en kg)</label>
+                    <input type="number" id="profile-target-weight" class="form-input" value="70" step="0.1">
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-activity">Niveau d'activité physique</label>
-                    <select id="profile-activity">
+                    <label for="profile-activity" class="form-label">Niveau d'activité physique</label>
+                    <select id="profile-activity" class="form-input">
                         <option value="1.2">Sédentaire (peu ou pas d'exercice)</option>
                         <option value="1.375">Légèrement actif (exercice léger 1-3j/sem)</option>
                         <option value="1.55" selected>Modérément actif (exercice modéré 3-5j/sem)</option>
@@ -614,21 +664,21 @@
                     </select>
                 </div>
 
-                <button id="btn-calculate-profile" style="width:100%;">Calculer mes recommandations & Objectif</button>
+                <button class="btn btn-primary btn-full" id="btn-calculate-profile">Calculer mes recommandations & Objectif</button>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Suivi de l'évolution du poids</h3>
+                <h3 class="card-title" style="margin-bottom:1.6rem;">Suivi de l'évolution du poids</h3>
                 <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; font-size:1.5rem;">
-                    <div>Poids de départ : <strong id="stat-start-weight">80 kg</strong></div>
+                    <div>Départ : <strong id="stat-start-weight">80 kg</strong></div>
                     <div>Cible : <strong id="stat-target-weight">70 kg</strong></div>
-                    <div>Perte : <strong id="stat-diff-weight" style="color:var(--primary);">0 kg</strong></div>
+                    <div>Différence : <strong id="stat-diff-weight" style="color:var(--brand-primary);">0 kg</strong></div>
                 </div>
                 <div class="form-group">
-                    <label for="new-weight-log">Enregistrer une pesée aujourd'hui (kg)</label>
+                    <label for="new-weight-log" class="form-label" id="label-new-weight">Enregistrer une pesée aujourd'hui (kg)</label>
                     <div style="display:flex; gap:1rem;">
-                        <input type="number" step="0.1" id="new-weight-log" placeholder="Ex: 79.2">
-                        <button id="btn-log-weight">Ajouter</button>
+                        <input type="number" step="0.1" id="new-weight-log" class="form-input" placeholder="Ex: 79.2">
+                        <button class="btn btn-primary" id="btn-log-weight">Ajouter</button>
                     </div>
                 </div>
                 <div id="weight-history-container" style="margin-top:1.5rem;"></div>
@@ -638,27 +688,27 @@
         <!-- ONGLET 4 : BILAN MENSUEL -->
         <section id="tab-monthly" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;" id="monthly-title">Bilan du mois</h2>
-                <div class="points-summary-grid">
-                    <div class="metric-card">
-                        <h3>Moyenne Points / jour</h3>
-                        <div class="value" id="monthly-avg-points">0</div>
+                <h2 class="card-title" style="margin-bottom:1.6rem;" id="monthly-title">Bilan du mois</h2>
+                <div class="stats-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="stat-box">
+                        <span class="stat-label">Moyenne Points / jour</span>
+                        <div class="stat-value" id="monthly-avg-points">0</div>
                     </div>
-                    <div class="metric-card" style="background:var(--border);">
-                        <h3>Moyenne Calories / jour</h3>
-                        <div class="value" id="monthly-avg-calories" style="color:var(--text-main);">0 kcal</div>
+                    <div class="stat-box">
+                        <span class="stat-label">Moyenne Calories / jour</span>
+                        <div class="stat-value" id="monthly-avg-calories" style="color:var(--text-primary);">0 kcal</div>
                     </div>
                 </div>
 
-                <h3 style="margin-top:2rem;">Calendrier d'activité du mois</h3>
+                <h3 class="card-title" style="margin-top:2rem; margin-bottom:1rem;">Calendrier d'activité du mois</h3>
                 <div class="heatmap-grid" id="monthly-heatmap"></div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Export des données</h3>
+                <h3 class="card-title" style="margin-bottom:1.6rem;">Export des données</h3>
                 <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                    <button class="secondary" id="btn-export-json">Exporter en JSON</button>
-                    <button class="secondary" id="btn-export-csv">Exporter en CSV</button>
+                    <button class="btn btn-secondary" id="btn-export-json">Exporter en JSON</button>
+                    <button class="btn btn-secondary" id="btn-export-csv">Exporter en CSV</button>
                 </div>
             </div>
         </section>
@@ -684,43 +734,47 @@
         </button>
     </nav>
 
-    <!-- MODAL PARAMÈTRES / CAPITAL -->
+    <!-- MODAL RÉGLAGE CAPITAL -->
     <div class="modal" id="settings-modal">
         <div class="modal-content">
-            <h3 style="margin-top:0;">Modifier le Capital Journalier</h3>
+            <h3 class="card-title" style="margin-bottom:1.6rem;">Modifier le Capital Journalier</h3>
             <div class="form-group">
-                <label for="modal-daily-points">Points maximum / jour</label>
-                <input type="number" id="modal-daily-points" value="30" min="10" max="200">
+                <label for="modal-daily-points" class="form-label">Points maximum / jour</label>
+                <input type="number" id="modal-daily-points" class="form-input" value="30" min="10" max="200">
             </div>
             <div class="form-group">
-                <label for="modal-daily-calories">Objectif calories / jour (kcal)</label>
-                <input type="number" id="modal-daily-calories" value="2000" min="500" max="5000">
+                <label for="modal-daily-calories" class="form-label">Objectif calories / jour (kcal)</label>
+                <input type="number" id="modal-daily-calories" class="form-input" value="2000" min="500" max="5000">
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:1rem;">
-                <button class="secondary" id="btn-close-settings">Annuler</button>
-                <button id="btn-save-settings">Enregistrer</button>
+            <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
+                <button class="btn btn-secondary" id="btn-close-settings">Annuler</button>
+                <button class="btn btn-primary" id="btn-save-settings">Enregistrer</button>
             </div>
         </div>
     </div>
 
+    <!-- ==========================================================================
+         LOGIQUE JAVASCRIPT ES6+ AMALGAMÉE & ROBUSTE
+         ========================================================================== -->
     <script>
         class AppState {
             constructor() { this.load(); }
             load() {
-                const data = JSON.parse(localStorage.getItem('nutripoints_state') || '{}');
+                const data = JSON.parse(localStorage.getItem('nutripoints_state_v2') || '{}');
                 this.firstname = data.firstname || '';
                 this.accent = data.accent || 'green';
                 this.theme = data.theme || 'dark';
+                this.unitSystem = data.unitSystem || 'metric'; // 'metric' ou 'imperial'
                 this.dailyPointsTarget = data.dailyPointsTarget || 30;
                 this.dailyCaloriesTarget = data.dailyCaloriesTarget || 2000;
                 this.currentDate = data.currentDate || new Date().toISOString().split('T')[0];
                 this.logs = data.logs || {};
                 this.weights = data.weights || [];
-                this.profile = data.profile || { gender: 'male', age: 45, height: 175, weight: 80, targetWeight: 70, activity: 1.55 };
+                this.profile = data.profile || { gender: 'male', age: 45, heightCm: 175, weightKg: 80, targetWeightKg: 70, activity: 1.55 };
             }
             save() {
-                localStorage.setItem('nutripoints_state', JSON.stringify({
-                    firstname: this.firstname, accent: this.accent, theme: this.theme,
+                localStorage.setItem('nutripoints_state_v2', JSON.stringify({
+                    firstname: this.firstname, accent: this.accent, theme: this.theme, unitSystem: this.unitSystem,
                     dailyPointsTarget: this.dailyPointsTarget, dailyCaloriesTarget: this.dailyCaloriesTarget,
                     currentDate: this.currentDate, logs: this.logs, weights: this.weights, profile: this.profile
                 }));
@@ -741,41 +795,57 @@
 
         const state = new AppState();
 
+        // Formule de calcul des points (SmartPoints pondérés)
         function calculatePoints(calories, proteins, carbs, fats, fibers) {
             let pts = (calories / 50) + (fats / 3.5) - (fibers / 4) - (proteins / 10);
             return Math.max(0, Math.round(pts * 10) / 10);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
+            initThemeAndAppearance();
             initNavigation();
             initDashboard();
-            initScanner();
-            initManualCalculator();
-            initProfile();
-            initMonthly();
+            initScannerAndManual();
+            initProfileAndUnits();
+            initMonthlyAndExport();
             initSettingsModal();
         });
 
-        function initTheme() {
-            document.body.setAttribute('data-theme', state.theme);
-            document.body.setAttribute('data-accent', state.accent);
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => toast.remove(), 260);
+            }, 3200);
+        }
+
+        function initThemeAndAppearance() {
+            document.documentElement.setAttribute('data-theme', state.theme);
+            document.documentElement.setAttribute('data-accent', state.accent);
             document.getElementById('select-accent').value = state.accent;
+            document.getElementById('select-unit-system').value = state.unitSystem;
             document.getElementById('input-firstname').value = state.firstname;
 
             document.getElementById('btn-theme').addEventListener('click', () => {
                 state.theme = state.theme === 'dark' ? 'light' : 'dark';
-                document.body.setAttribute('data-theme', state.theme);
+                document.documentElement.setAttribute('data-theme', state.theme);
                 state.save();
             });
 
             document.getElementById('btn-save-appearance').addEventListener('click', () => {
                 state.firstname = document.getElementById('input-firstname').value.trim();
                 state.accent = document.getElementById('select-accent').value;
-                document.body.setAttribute('data-accent', state.accent);
+                state.unitSystem = document.getElementById('select-unit-system').value;
+                document.documentElement.setAttribute('data-accent', state.accent);
                 state.save();
                 updateDashboardUI();
-                alert('Préférences enregistrées !');
+                updateProfileUI();
+                showToast('Préférences enregistrées avec succès !');
             });
         }
 
@@ -815,7 +885,8 @@
         function updateDashboardUI() {
             document.getElementById('welcome-msg').textContent = state.firstname ? `Bonjour, ${state.firstname} !` : 'Bonjour !';
             
-            const todayLabel = state.currentDate === new Date().toISOString().split('T')[0] 
+            const todayISO = new Date().toISOString().split('T')[0];
+            const todayLabel = state.currentDate === todayISO 
                 ? "Aujourd'hui" 
                 : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('current-date-label').textContent = todayLabel;
@@ -839,7 +910,9 @@
             document.getElementById('remaining-points-val').textContent = remaining;
             document.getElementById('budget-info').textContent = `sur ${state.dailyPointsTarget} pts`;
             document.getElementById('total-calories-val').textContent = `${Math.round(totalCal)} kcal`;
-            document.getElementById('target-calories-info').textContent = `Objectif: ${state.dailyCaloriesTarget} kcal`;
+            document.getElementById('target-calories-info').textContent = `${state.dailyCaloriesTarget} kcal`;
+
+            document.getElementById('stat-consumed').textContent = totalPts;
 
             document.getElementById('macro-p-val').textContent = `${Math.round(totalP)}g`;
             document.getElementById('macro-g-val').textContent = `${Math.round(totalG)}g`;
@@ -850,6 +923,11 @@
             document.getElementById('bar-g').style.width = `${Math.min(100, (totalG / 250) * 100)}%`;
             document.getElementById('bar-l').style.width = `${Math.min(100, (totalL / 70) * 100)}%`;
             document.getElementById('bar-f').style.width = `${Math.min(100, (totalF / 30) * 100)}%`;
+
+            // Mise à jour jauge SVG (circonférence = 314.16)
+            const circumference = 314.16;
+            const ratioRem = Math.max(0, Math.min(1, remaining / state.dailyPointsTarget));
+            document.getElementById('gauge-progress-circle').style.strokeDashoffset = (circumference * (1 - ratioRem)).toFixed(2);
 
             const listEl = document.getElementById('daily-food-list');
             if (logs.length === 0) {
@@ -863,7 +941,7 @@
                         </div>
                         <div class="food-actions">
                             <span class="badge">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
-                            <button class="secondary" onclick="removeFoodItem(${idx})" style="padding:0.4rem 0.8rem; font-size:1.2rem;">✕</button>
+                            <button class="btn btn-danger btn-sm btn-icon" onclick="removeFoodItem(${idx})" aria-label="Supprimer">✕</button>
                         </div>
                     </li>
                 `).join('');
@@ -873,6 +951,7 @@
         window.removeFoodItem = function(index) {
             state.removeFood(index);
             updateDashboardUI();
+            showToast('Aliment supprimé du journal.');
         }
 
         function initSettingsModal() {
@@ -889,13 +968,15 @@
                 state.save();
                 modal.classList.remove('open');
                 updateDashboardUI();
+                showToast('Capital journalier mis à jour.');
             });
         }
 
+        // Scanner & Calculateur Manuel
         let codeReader = null;
         let isScanning = false;
 
-        function initScanner() {
+        function initScannerAndManual() {
             const videoEl = document.getElementById('scanner-video');
             const containerEl = document.getElementById('scanner-container');
 
@@ -903,18 +984,17 @@
                 containerEl.style.display = 'block';
                 document.getElementById('btn-start-scanner').style.display = 'none';
                 document.getElementById('btn-stop-scanner').style.display = 'inline-flex';
-                
                 try {
                     codeReader = new ZXing.BrowserMultiFormatReader();
                     isScanning = true;
-                    codeReader.decodeFromVideoDevice(null, videoEl, (result, err) => {
+                    codeReader.decodeFromVideoDevice(null, videoEl, (result) => {
                         if (result && isScanning) {
                             stopScanner();
                             fetchProductByBarcode(result.text);
                         }
                     });
                 } catch (e) {
-                    alert('Erreur caméra : ' + e.message);
+                    showToast('Erreur caméra : ' + e.message, 'error');
                     stopScanner();
                 }
             });
@@ -929,7 +1009,7 @@
                     const result = await reader.decodeFromImageUrl(URL.createObjectURL(file));
                     if (result) fetchProductByBarcode(result.text);
                 } catch (err) {
-                    alert('Impossible de décoder l’image.');
+                    showToast('Impossible de décoder l’image.', 'error');
                 }
             });
 
@@ -937,40 +1017,7 @@
                 const code = document.getElementById('manual-barcode').value.trim();
                 if (code) fetchProductByBarcode(code);
             });
-        }
 
-        function stopScanner() {
-            isScanning = false;
-            if (codeReader) codeReader.reset();
-            document.getElementById('scanner-container').style.display = 'none';
-            document.getElementById('btn-start-scanner').style.display = 'inline-flex';
-            document.getElementById('btn-stop-scanner').style.display = 'none';
-        }
-
-        async function fetchProductByBarcode(barcode) {
-            try {
-                const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
-                const data = await res.json();
-                if (data.status === 1 && data.product) {
-                    const p = data.product;
-                    const nutriments = p.nutriments || {};
-                    document.getElementById('manual-name').value = p.product_name || 'Produit inconnu';
-                    document.getElementById('manual-calories').value = nutriments['energy-kcal_100g'] || 150;
-                    document.getElementById('manual-proteins').value = nutriments['proteins_100g'] || 0;
-                    document.getElementById('manual-carbs').value = nutriments['carbohydrates_100g'] || 0;
-                    document.getElementById('manual-fats').value = nutriments['fat_100g'] || 0;
-                    document.getElementById('manual-fibers').value = nutriments['fiber_100g'] || 0;
-                    updateCalculatorPreview();
-                    alert(`Trouvé : ${p.product_name || 'Aliment'}`);
-                } else {
-                    alert('Produit non trouvé.');
-                }
-            } catch (e) {
-                alert('Erreur réseau.');
-            }
-        }
-
-        function initManualCalculator() {
             ['manual-calories', 'manual-proteins', 'manual-carbs', 'manual-fats', 'manual-fibers', 'manual-serving'].forEach(id => {
                 document.getElementById(id).addEventListener('input', updateCalculatorPreview);
             });
@@ -987,10 +1034,42 @@
                 const points = calculatePoints(calories, proteins, carbs, fats, fibers);
 
                 state.addFood({ name, calories, proteins, carbs, fats, fibers, serving, points });
-                alert('Ajouté au journal !');
+                showToast(`${name} ajouté au journal !`);
                 document.querySelector('[data-target="tab-dashboard"]').click();
                 updateDashboardUI();
             });
+        }
+
+        function stopScanner() {
+            isScanning = false;
+            if (codeReader) codeReader.reset();
+            document.getElementById('scanner-container').style.display = 'none';
+            document.getElementById('btn-start-scanner').style.display = 'inline-flex';
+            document.getElementById('btn-stop-scanner').style.display = 'none';
+        }
+
+        async function fetchProductByBarcode(barcode) {
+            try {
+                showToast('Recherche du produit...');
+                const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+                const data = await res.json();
+                if (data.status === 1 && data.product) {
+                    const p = data.product;
+                    const n = p.nutriments || {};
+                    document.getElementById('manual-name').value = p.product_name_fr || p.product_name || 'Produit inconnu';
+                    document.getElementById('manual-calories').value = n['energy-kcal_100g'] || 150;
+                    document.getElementById('manual-proteins').value = n['proteins_100g'] || 0;
+                    document.getElementById('manual-carbs').value = n['carbohydrates_100g'] || 0;
+                    document.getElementById('manual-fats').value = n['fat_100g'] || 0;
+                    document.getElementById('manual-fibers').value = n['fiber_100g'] || 0;
+                    updateCalculatorPreview();
+                    showToast(`Produit chargé : ${p.product_name_fr || p.product_name}`);
+                } else {
+                    showToast('Produit non trouvé sur Open Food Facts.', 'error');
+                }
+            } catch (e) {
+                showToast('Erreur de connexion réseau.', 'error');
+            }
         }
 
         function updateCalculatorPreview() {
@@ -1004,95 +1083,143 @@
             document.getElementById('preview-calculated-points').textContent = `${totalPts} pts`;
         }
 
-        function initProfile() {
+        // Profil, Objectifs et Gestion des Unités (Métrique vs Impérial)
+        function initProfileAndUnits() {
             const p = state.profile;
             document.getElementById('profile-gender').value = p.gender;
             document.getElementById('profile-age').value = p.age;
-            document.getElementById('profile-height').value = p.height;
-            document.getElementById('profile-weight').value = p.weight;
-            document.getElementById('profile-target-weight').value = p.targetWeight;
             document.getElementById('profile-activity').value = p.activity;
 
+            // Gestion affichage selon unité
+            const unitSelect = document.getElementById('select-unit-system');
+            unitSelect.addEventListener('change', toggleUnitFields);
+
+            if (state.unitSystem === 'imperial') {
+                unitSelect.value = 'imperial';
+                // Conversion kg vers lbs
+                document.getElementById('profile-weight-lbs').value = Math.round((p.weightKg * 2.20462) * 10) / 10;
+                document.getElementById('profile-target-weight').value = Math.round((p.targetWeightKg * 2.20462) * 10) / 10;
+                // Conversion cm vers pi / po
+                const totalInches = p.heightCm / 2.54;
+                document.getElementById('profile-height-ft').value = Math.floor(totalInches / 12);
+                document.getElementById('profile-height-in').value = Math.round(totalInches % 12);
+            } else {
+                document.getElementById('profile-height-cm').value = p.heightCm;
+                document.getElementById('profile-weight-kg').value = p.weightKg;
+                document.getElementById('profile-target-weight').value = p.targetWeightKg;
+            }
+            toggleUnitFields();
+
             document.getElementById('btn-calculate-profile').addEventListener('click', () => {
+                const isImp = state.unitSystem === 'imperial';
+                let heightCm = 175, weightKg = 75, targetKg = 65;
+
+                if (isImp) {
+                    const ft = parseFloat(document.getElementById('profile-height-ft').value) || 5;
+                    const inches = parseFloat(document.getElementById('profile-height-in').value) || 8;
+                    heightCm = ((ft * 12) + inches) * 2.54;
+                    const wLbs = parseFloat(document.getElementById('profile-weight-lbs').value) || 160;
+                    weightKg = wLbs / 2.20462;
+                    const tLbs = parseFloat(document.getElementById('profile-target-weight').value) || 140;
+                    targetKg = tLbs / 2.20462;
+                } else {
+                    heightCm = parseFloat(document.getElementById('profile-height-cm').value) || 175;
+                    weightKg = parseFloat(document.getElementById('profile-weight-kg').value) || 75;
+                    targetKg = parseFloat(document.getElementById('profile-target-weight').value) || 65;
+                }
+
                 state.profile = {
                     gender: document.getElementById('profile-gender').value,
                     age: parseInt(document.getElementById('profile-age').value) || 30,
-                    height: parseFloat(document.getElementById('profile-height').value) || 170,
-                    weight: parseFloat(document.getElementById('profile-weight').value) || 70,
-                    targetWeight: parseFloat(document.getElementById('profile-target-weight').value) || 60,
+                    heightCm: Math.round(heightCm),
+                    weightKg: Math.round(weightKg * 10) / 10,
+                    targetWeightKg: Math.round(targetKg * 10) / 10,
                     activity: parseFloat(document.getElementById('profile-activity').value) || 1.2
                 };
-                let bmr = (10 * state.profile.weight) + (6.25 * state.profile.height) - (5 * state.profile.age);
+
+                // Calcul Mifflin-St Jeor
+                let bmr = (10 * state.profile.weightKg) + (6.25 * state.profile.heightCm) - (5 * state.profile.age);
                 bmr += state.profile.gender === 'male' ? 5 : -161;
                 let tdee = Math.round(bmr * state.profile.activity);
                 let targetCal = tdee > 1500 ? tdee - 500 : tdee;
+
                 state.dailyCaloriesTarget = targetCal;
                 state.dailyPointsTarget = Math.round(targetCal / 65);
                 state.save();
                 updateProfileUI();
-                alert(`Objectifs mis à jour !\n• Calories : ${targetCal} kcal\n• Points : ${state.dailyPointsTarget} pts`);
+                updateDashboardUI();
+                showToast(`Objectifs calculés !\n• Calories : ${targetCal} kcal\n• Capital : ${state.dailyPointsTarget} pts`);
             });
 
             document.getElementById('btn-log-weight').addEventListener('click', () => {
-                const w = parseFloat(document.getElementById('new-weight-log').value);
-                if (!w) return;
-                state.weights.push({ date: new Date().toISOString().split('T')[0], weight: w });
+                const val = parseFloat(document.getElementById('new-weight-log').value);
+                if (!val) return;
+                const wKg = state.unitSystem === 'imperial' ? val / 2.20462 : val;
+                state.weights.push({ date: new Date().toISOString().split('T')[0], weightKg: Math.round(wKg * 10) / 10 });
                 state.weights.sort((a,b) => new Date(a.date) - new Date(b.date));
                 state.save();
                 updateProfileUI();
                 document.getElementById('new-weight-log').value = '';
+                showToast('Pesée enregistrée avec succès.');
             });
 
             updateProfileUI();
         }
 
+        function toggleUnitFields() {
+            const isImp = document.getElementById('select-unit-system').value === 'imperial';
+            const metricRow = document.getElementById('height-weight-metric-row');
+            const impRow = document.getElementById('height-weight-imperial-row');
+            const labelTarget = document.getElementById('label-target-weight');
+            const labelNewW = document.getElementById('label-new-weight');
+
+            if (isImp) {
+                metricRow.classList.add('hidden');
+                impRow.classList.remove('hidden');
+                labelTarget.textContent = 'Poids idéal recherché (Cible en lbs)';
+                labelNewW.textContent = 'Enregistrer une pesée aujourd\'hui (lbs)';
+            } else {
+                impRow.classList.add('hidden');
+                metricRow.classList.remove('hidden');
+                labelTarget.textContent = 'Poids idéal recherché (Cible en kg)';
+                labelNewW.textContent = 'Enregistrer une pesée aujourd\'hui (kg)';
+            }
+        }
+
         function updateProfileUI() {
             const p = state.profile;
-            const startWeight = state.weights.length > 0 ? state.weights[0].weight : p.weight;
-            const currentWeight = state.weights.length > 0 ? state.weights[state.weights.length - 1].weight : p.weight;
-            const diff = Math.round((currentWeight - startWeight) * 10) / 10;
+            const isImp = state.unitSystem === 'imperial';
+            const unitLabel = isImp ? ' lbs' : ' kg';
 
-            document.getElementById('stat-start-weight').textContent = `${startWeight} kg`;
-            document.getElementById('stat-target-weight').textContent = `${p.targetWeight} kg`;
+            const startKg = state.weights.length > 0 ? state.weights[0].weightKg : p.weightKg;
+            const currentKg = state.weights.length > 0 ? state.weights[state.weights.length - 1].weightKg : p.weightKg;
+            const diffKg = currentKg - startKg;
+
+            const displayVal = (kg) => isImp ? Math.round((kg * 2.20462) * 10) / 10 : kg;
+
+            document.getElementById('stat-start-weight').textContent = `${displayVal(startKg)}${unitLabel}`;
+            document.getElementById('stat-target-weight').textContent = `${displayVal(p.targetWeightKg)}${unitLabel}`;
+            
+            const diffDisplay = displayVal(Math.abs(diffKg));
             const diffEl = document.getElementById('stat-diff-weight');
-            diffEl.textContent = `${diff > 0 ? '+' : ''}${diff} kg`;
-            diffEl.style.color = diff <= 0 ? 'var(--primary)' : '#ef4444';
+            diffEl.textContent = `${diffKg > 0 ? '+' : ''}${diffDisplay}${unitLabel}`;
+            diffEl.style.color = diffKg <= 0 ? 'var(--brand-primary)' : '#ef4444';
 
             const historyEl = document.getElementById('weight-history-container');
             historyEl.innerHTML = state.weights.length === 0 ? `<p style="color:var(--text-muted); font-size:1.3rem;">Aucune pesée enregistrée.</p>` :
-                state.weights.map(w => `<div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border); font-size:1.4rem;"><span>${w.date}</span><strong>${w.weight} kg</strong></div>`).join('');
+                state.weights.map(w => `
+                    <div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border-subtle); font-size:1.4rem;">
+                        <span>${w.date}</span>
+                        <strong>${displayVal(w.weightKg)}${unitLabel}</strong>
+                    </div>
+                `).join('');
         }
 
-        function updateMonthlyUI() {
-            const now = new Date();
-            const yearMonth = now.toISOString().slice(0, 7);
-            document.getElementById('monthly-title').textContent = `Bilan de ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
-
-            let totalDays = 0, sumPts = 0, sumCal = 0;
-            const heatmapEl = document.getElementById('monthly-heatmap');
-            let heatmapHtml = '';
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayStr = `${yearMonth}-${String(day).padStart(2, '0')}`;
-                const dayLogs = state.logs[dayStr] || [];
-                const hasData = dayLogs.length > 0;
-                if (hasData) totalDays++;
-                let dayCal = 0;
-                dayLogs.forEach(i => dayCal += i.calories * (i.serving/100));
-                sumCal += dayCal;
-                heatmapHtml += `<div class="heatmap-day ${hasData ? 'active-day' : ''}">${day}</div>`;
-            }
-            heatmapEl.innerHTML = heatmapHtml;
-
-            document.getElementById('monthly-avg-points').textContent = totalDays > 0 ? Math.round(sumPts / totalDays) : 0;
-            document.getElementById('monthly-avg-calories').textContent = totalDays > 0 ? `${Math.round(sumCal / totalDays)} kcal` : '0 kcal';
-
+        function initMonthlyAndExport() {
             document.getElementById('btn-export-json').onclick = () => {
                 const blob = new Blob([JSON.stringify(state.logs, null, 2)], { type: 'text/json;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const dl = document.createElement('a');
-                dl.href = url; dl.download = "nutripoints_export.json"; dl.click();
+                const dl = document.createElement('a'); dl.href = url; dl.download = "nutripoints_export.json"; dl.click();
             };
 
             document.getElementById('btn-export-csv').onclick = () => {
@@ -1102,9 +1229,38 @@
                 }
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const dl = document.createElement('a');
-                dl.href = url; dl.download = "nutripoints_export.csv"; dl.click();
+                const dl = document.createElement('a'); dl.href = url; dl.download = "nutripoints_export.csv"; dl.click();
             };
+        }
+
+        function updateMonthlyUI() {
+            const now = new Date();
+            const yearMonth = now.toISOString().slice(0, 7);
+            document.getElementById('monthly-title').textContent = `Bilan de ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+
+            let totalDays = 0, sumCal = 0, sumPts = 0;
+            const heatmapEl = document.getElementById('monthly-heatmap');
+            let heatmapHtml = '';
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = `${yearMonth}-${String(day).padStart(2, '0')}`;
+                const dayLogs = state.logs[dayStr] || [];
+                const hasData = dayLogs.length > 0;
+                if (hasData) totalDays++;
+                let dayCal = 0, dayPts = 0;
+                dayLogs.forEach(i => {
+                    dayCal += i.calories * (i.serving / 100);
+                    dayPts += i.points * (i.serving / 100);
+                });
+                sumCal += dayCal;
+                sumPts += dayPts;
+                heatmapHtml += `<div class="heatmap-day ${hasData ? 'active-day' : ''}">${day}</div>`;
+            }
+            heatmapEl.innerHTML = heatmapHtml;
+
+            document.getElementById('monthly-avg-points').textContent = totalDays > 0 ? Math.round(sumPts / totalDays) : 0;
+            document.getElementById('monthly-avg-calories').textContent = totalDays > 0 ? `${Math.round(sumCal / totalDays)} kcal` : '0 kcal';
         }
     </script>
 </body>

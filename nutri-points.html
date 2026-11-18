@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriPoints — Scanner & Suivi Nutritionnel</title>
+
+    <!-- Police Google Fonts : Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CDN html5-qrcode pour le scan de codes-barres -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        /* ==========================================================================
+           1. FONDATIONS CSS & ACCESSIBILITÉ (1rem = 10px, WCAG AA/AAA)
+           ========================================================================== */
+        :root {
+            font-size: 62.5%; /* 1rem = 10px exactement */
+            
+            /* Palette Mode Clair (Contraste élevé) */
+            --bg-app: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-surface-alt: #f8fafc;
+            --bg-input: #ffffff;
+            --border-color: #cbd5e1;
+            --border-subtle: #e2e8f0;
+            
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #475569;
+            
+            --brand-primary: #15803d;      /* Vert forêt accessible (ratio > 5.1:1 sur blanc) */
+            --brand-primary-hover: #166534;
+            --brand-light: #dcfce7;
+            --brand-text: #14532d;
+            
+            --accent-blue: #0369a1;
+            --accent-blue-light: #e0f2fe;
+            --warning-color: #b45309;
+            --warning-light: #fef3c7;
+            --danger-color: #b91c1c;
+            --danger-light: #fee2e2;
+            
+            --shadow-sm: 0 0.1rem 0.3rem rgba(15, 23, 42, 0.08);
+            --shadow-md: 0 0.4rem 1.2rem rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 1.2rem 2.8rem rgba(15, 23, 42, 0.18);
+            
+            --radius-sm: 0.8rem;
+            --radius-md: 1.2rem;
+            --radius-lg: 1.8rem;
+            --radius-full: 999.9rem;
+            
+            --focus-ring: 0 0 0 0.3rem rgba(21, 128, 61, 0.45);
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #0b1120;
+            --bg-surface: #1e293b;
+            --bg-surface-alt: #0f172a;
+            --bg-input: #0f172a;
+            --border-color: #475569;
+            --border-subtle: #334155;
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #e2e8f0;
+            --text-muted: #94a3b8;
+            
+            --brand-primary: #22c55e;
+            --brand-primary-hover: #4ade80;
+            --brand-light: rgba(34, 197, 94, 0.18);
+            --brand-text: #86efac;
+            
+            --accent-blue: #38bdf8;
+            --accent-blue-light: rgba(56, 189, 248, 0.18);
+            --warning-color: #fbbf24;
+            --warning-light: rgba(251, 191, 36, 0.18);
+            --danger-color: #f87171;
+            --danger-light: rgba(248, 113, 113, 0.18);
+            
+            --shadow-sm: 0 0.1rem 0.3rem rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 1.2rem 2.8rem rgba(0, 0, 0, 0.55);
+            --focus-ring: 0 0 0 0.3rem rgba(74, 222, 128, 0.5);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1.6rem; /* 16px */
+            line-height: 1.5;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        /* Focus visible WCAG pour navigation clavier */
+        :focus-visible {
+            outline: 0.2rem solid var(--brand-primary);
+            outline-offset: 0.2rem;
+            box-shadow: var(--focus-ring);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 0.1rem;
+            height: 0.1rem;
+            padding: 0;
+            margin: -0.1rem;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==========================================================================
+           2. EN-TÊTE & LAYOUT RESPONSIVE MOBILE-FIRST
+           ========================================================================== */
+        .app-header {
+            background-color: var(--bg-surface);
+            border-bottom: 0.1rem solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-inner {
+            max-width: 112rem;
+            margin: 0 auto;
+            padding: 1.2rem 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.2rem;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .logo-badge {
+            width: 4.2rem;
+            height: 4.2rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #15803d, #22c55e);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0.3rem 0.8rem rgba(21, 128, 61, 0.3);
+        }
+
+        .brand-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .brand-title span {
+            color: var(--brand-primary);
+        }
+
+        .brand-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .main-container {
+            max-width: 112rem;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.6rem 4rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2.4rem;
+        }
+
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.4rem;
+            align-items: start;
+        }
+
+        @media (min-width: 900px) {
+            .workspace-grid {
+                grid-template-columns: 5fr 7fr;
+            }
+        }
+
+        .column-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 2.4rem;
+        }
+
+        /* ==========================================================================
+           3. CARTES & BOUTONS ACCESSIBLES
+           ========================================================================== */
+        .card {
+            background-color: var(--bg-surface);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.2rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            min-height: 4.2rem; /* Cible tactile WCAG >= 42px */
+            padding: 0.9rem 1.6rem;
+            font-family: inherit;
+            font-size: 1.4rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 0.1rem solid transparent;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-decoration: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-primary);
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .btn-primary {
+            color: #052e16;
+            font-weight: 700;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--brand-primary-hover);
+            transform: translateY(-0.1rem);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-surface-alt);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: var(--border-subtle);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-light);
+            color: var(--danger-color);
+            border-color: transparent;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            filter: brightness(0.95);
+        }
+
+        .btn-sm {
+            min-height: 3.4rem;
+            padding: 0.5rem 1.1rem;
+            font-size: 1.3rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .btn-icon {
+            width: 4.2rem;
+            padding: 0;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* ==========================================================================
+           4. TABLEAU DE BORD QUOTIDIEN & JAUGE CIRCULAIRE SVG
+           ========================================================================== */
+        .dashboard-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (min-width: 680px) {
+            .dashboard-card {
+                grid-template-columns: auto 1fr;
+                padding: 2.4rem;
+            }
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 16rem;
+            height: 16rem;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: var(--border-subtle);
+            stroke-width: 1.4;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--brand-primary);
+            stroke-width: 1.4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.3s ease;
+        }
+
+        .gauge-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.2rem;
+        }
+
+        .gauge-remaining-val {
+            font-size: 3.4rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text-primary);
+        }
+
+        .gauge-remaining-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        .dashboard-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+        }
+
+        .date-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 0.6rem;
+        }
+
+        .current-date-label {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: capitalize;
+            text-align: center;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
+        }
+
+        .stat-box {
+            background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 1.2rem;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .edit-budget-trigger {
+            background: var(--brand-light);
+            color: var(--brand-text);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.3rem 0.7rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .edit-budget-trigger:hover {
+            filter: brightness(0.92);
+        }
+
+        /* Édition directe en ligne du capital points */
+        .inline-budget-editor {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background-color: var(--brand-light);
+            padding: 1rem 1.2rem;
+            border-radius: var(--radius-md);
+            border: 0.1rem solid var(--brand-primary);
+        }
+
+        /* ==========================================================================
+           5. ONGLETS SCANNER / CALCULATEUR MANUEL & CAMÉRA
+           ========================================================================== */
+        .tabs-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            background-color: var(--bg-surface-alt);
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 0.1rem solid var(--border-subtle);
+            margin-bottom: 1.8rem;
+        }
+
+        .tab-btn {
+            min-height: 4rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 1.4rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn[aria-selected="true"] {
+            background-color: var(--bg-surface);
+            color: var(--brand-primary);
+            box-shadow: var(--shadow-sm);
+            font-weight: 700;
+        }
+
+        .scanner-box {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border-radius: var(--radius-md);
+            padding: 2.4rem 1.6rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 21rem;
+            gap: 1.4rem;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #000;
+        }
+
+        #reader video {
+            width: 100% !important;
+            border-radius: var(--radius-md);
+            object-fit: cover;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+        }
+
+        /* Formulaires & Champs */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .form-label {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            min-height: 4.4rem;
+            padding: 0.9rem 1.4rem;
+            font-family: inherit;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            background-color: var(--bg-input);
+            border: 0.15rem solid var(--border-color);
+            border-radius: var(--radius-md);
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--brand-primary);
+            outline: none;
+        }
+
+        .input-group-row {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .grid-2-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        .quick-samples {
+            margin-top: 1.6rem;
+            padding-top: 1.6rem;
+            border-top: 0.1rem solid var(--border-subtle);
+        }
+
+        .sample-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
+        /* ==========================================================================
+           6. FICHE PRODUIT SCANNÉ & AJUSTEMENT DE PORTION
+           ========================================================================== */
+        .product-header {
+            display: flex;
+            gap: 1.6rem;
+            align-items: center;
+            padding-bottom: 1.6rem;
+            border-bottom: 0.1rem solid var(--border-subtle);
+        }
+
+        .product-thumb {
+            width: 8.4rem;
+            height: 8.4rem;
+            object-fit: contain;
+            background-color: #ffffff;
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .product-meta {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .badge {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 0.2rem 0.8rem;
+            border-radius: 0.6rem;
+            letter-spacing: 0.03em;
+        }
+
+        .badge-brand {
+            background-color: var(--brand-light);
+            color: var(--brand-text);
+        }
+
+        .product-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 0.3rem;
+        }
+
+        .points-pill {
+            background-color: var(--brand-primary);
+            color: #ffffff;
+            padding: 1.2rem 1.6rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+            flex-shrink: 0;
+            min-width: 8.4rem;
+        }
+
+        [data-theme="dark"] .points-pill {
+            color: #052e16;
+        }
+
+        .points-pill-num {
+            display: block;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .points-pill-unit {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .portion-control {
+            padding: 1.6rem 0;
+            border-bottom: 0.1rem solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .portion-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .portion-number-box {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .portion-number-input {
+            width: 8.4rem;
+            min-height: 3.8rem;
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            border: 0.15rem solid var(--border-color);
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 0.8rem;
+            background: var(--border-subtle);
+            border-radius: var(--radius-full);
+            accent-color: var(--brand-primary);
+            cursor: pointer;
+        }
+
+        .nutrients-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin: 1.6rem 0;
+        }
+
+        @media (min-width: 540px) {
+            .nutrients-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .nutrient-cell {
+            background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem;
+            text-align: center;
+        }
+
+        .nutrient-name {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .nutrient-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        /* ==========================================================================
+           7. JOURNAL ALIMENTAIRE DU JOUR
+           ========================================================================== */
+        .journal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .journal-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.2rem;
+            padding: 1.2rem 1.4rem;
+            background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md);
+        }
+
+        .journal-item-info {
+            min-width: 0;
+            flex-grow: 1;
+        }
+
+        .journal-item-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .journal-item-sub {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .journal-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .journal-pts-badge {
+            background-color: var(--brand-light);
+            color: var(--brand-text);
+            font-weight: 800;
+            font-size: 1.3rem;
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3.2rem 1.6rem;
+            border: 0.2rem dashed var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+        }
+
+        /* ==========================================================================
+           8. MODALES, LOADER & TOASTS
+           ========================================================================== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            background-color: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(0.3rem);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.6rem;
+        }
+
+        .modal-dialog {
+            background-color: var(--bg-surface);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            max-width: 48rem;
+            width: 100%;
+            padding: 2.4rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1.2rem;
+            margin-bottom: 1.6rem;
+            border-bottom: 0.1rem solid var(--border-subtle);
+        }
+
+        .modal-title {
+            font-size: 1.9rem;
+            font-weight: 800;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .formula-box {
+            background-color: var(--bg-surface-alt);
+            border: 0.1rem solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 1.4rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin: 1.2rem 0;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 70;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-width: 36rem;
+            width: calc(100% - 4rem);
+            pointer-events: none;
+        }
+
+        .toast {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 1.2rem 1.6rem;
+            border-radius: var(--radius-md);
+            font-size: 1.4rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            border-left: 0.5rem solid var(--brand-primary);
+            pointer-events: auto;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        .toast-error {
+            border-left-color: #ef4444;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(1rem); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .spinner {
+            width: 3.6rem;
+            height: 3.6rem;
+            border: 0.4rem solid var(--border-subtle);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.2rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .app-footer {
+            background-color: var(--bg-surface);
+            border-top: 0.1rem solid var(--border-subtle);
+            padding: 2rem 1.6rem;
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--text-muted);
+        }
+
+        .app-footer a {
+            color: var(--brand-primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notifications accessibles (ARIA Live) -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- EN-TÊTE -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand-logo">
+                <div class="logo-badge" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Nutri<span>Points</span></h1>
+                    <p class="brand-subtitle">Scanner & Équilibre Quotidien</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button type="button" id="btn-open-formula" class="btn btn-secondary btn-sm" aria-label="Voir la formule de calcul des points">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <span>Formule</span>
+                </button>
+                <button type="button" id="btn-toggle-theme" class="btn btn-secondary btn-icon btn-sm" aria-label="Basculer entre le thème clair et sombre" title="Changer de thème">
+                    <svg id="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <svg id="icon-sun" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="main-container">
+
+        <!-- 1. TABLEAU DE BORD QUOTIDIEN AVEC JAUGE CIRCULAIRE -->
+        <section class="card dashboard-card" aria-labelledby="dashboard-heading">
+            <h2 id="dashboard-heading" class="sr-only">Tableau de bord de votre capital points journalier</h2>
+
+            <!-- Jauge circulaire SVG -->
+            <div class="gauge-wrapper" role="img" id="gauge-aria-label" aria-label="30 points restants sur 30">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                    <circle id="gauge-progress-circle" class="gauge-fill" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="gauge-center">
+                    <span id="gauge-remaining-value" class="gauge-remaining-val">30</span>
+                    <span id="gauge-remaining-caption" class="gauge-remaining-label">pts restants</span>
+                </div>
+            </div>
+
+            <!-- Détails, Navigation Date & Capital Journalier Personnalisable -->
+            <div class="dashboard-details">
+                <!-- Sélecteur de date -->
+                <div class="date-nav-bar">
+                    <button type="button" id="btn-prev-day" class="btn btn-secondary btn-icon btn-sm" aria-label="Jour précédent">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <div style="text-align: center;">
+                        <p id="selected-date-text" class="current-date-label">Aujourd'hui</p>
+                        <button type="button" id="btn-today" class="hidden" style="background:none;border:none;color:var(--brand-primary);font-size:1.2rem;font-weight:700;cursor:pointer;text-decoration:underline;">Revenir à aujourd'hui</button>
+                    </div>
+                    <button type="button" id="btn-next-day" class="btn btn-secondary btn-icon btn-sm" aria-label="Jour suivant">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+
+                <!-- 3 Indicateurs clés -->
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-label">Consommés</span>
+                        <span class="stat-value"><span id="stat-consumed">0</span> <small style="font-size:1.3rem;font-weight:600;color:var(--text-muted)">pts</small></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Restants</span>
+                        <span class="stat-value" id="stat-remaining-box"><span id="stat-remaining">30</span> <small style="font-size:1.3rem;font-weight:600;color:var(--text-muted)">pts</small></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Capital / jour</span>
+                        <div class="stat-value">
+                            <span id="stat-budget">30</span>
+                            <button type="button" id="btn-edit-budget" class="edit-budget-trigger" aria-label="Modifier le capital de points journalier">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                Modifier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'édition directe du capital points (masqué par défaut) -->
+                <form id="inline-budget-form" class="inline-budget-editor hidden">
+                    <label for="daily-budget-input" style="font-size:1.4rem;font-weight:700;color:var(--brand-text);flex-grow:1;">
+                        Nouveau capital journalier (pts) :
+                    </label>
+                    <input type="number" id="daily-budget-input" min="10" max="200" value="30" required class="portion-number-input" style="width:7.6rem;">
+                    <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+                    <button type="button" id="btn-cancel-budget" class="btn btn-secondary btn-sm">Annuler</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- GRILLE PRINCIPALE (Scanner/Calculateur à gauche | Fiche produit & Journal à droite) -->
+        <div class="workspace-grid">
+            
+            <!-- COLONNE GAUCHE : SCANNER CODE-BARRES & CALCULATEUR MANUEL -->
+            <div class="column-stack">
+                <section class="card" aria-labelledby="tools-heading">
+                    <h2 id="tools-heading" class="sr-only">Outils de scan et de calcul</h2>
+
+                    <!-- Navigation par onglets accessibles -->
+                    <div class="tabs-nav" role="tablist" aria-label="Mode d'ajout d'aliment">
+                        <button type="button" role="tab" id="tab-scanner" class="tab-btn" aria-selected="true" aria-controls="panel-scanner">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                            Scanner / Code
+                        </button>
+                        <button type="button" role="tab" id="tab-manual-calc" class="tab-btn" aria-selected="false" aria-controls="panel-manual-calc">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+                            Calculateur libre
+                        </button>
+                    </div>
+
+                    <!-- ONGLET 1 : SCANNER CAMÉRA & RECHERCHE EAN/UPC -->
+                    <div id="panel-scanner" role="tabpanel" aria-labelledby="tab-scanner">
+                        <!-- Placeholder Caméra -->
+                        <div id="camera-placeholder" class="scanner-box">
+                            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                            <p style="font-size:1.4rem;color:#cbd5e1;max-width:26rem;">Scannez le code-barres EAN ou UPC d'un aliment avec votre caméra.</p>
+                            <button type="button" id="btn-start-camera" class="btn btn-primary">
+                                Activer la caméra
+                            </button>
+                        </div>
+
+                        <!-- Lecteur Vidéo Actif -->
+                        <div id="camera-active-wrapper" class="hidden">
+                            <div id="reader"></div>
+                            <div class="camera-controls">
+                                <button type="button" id="btn-switch-camera" class="btn btn-secondary btn-full">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                                    Caméra avant/arrière
+                                </button>
+                                <button type="button" id="btn-stop-camera" class="btn btn-danger">
+                                    Arrêter
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Saisie Manuelle Code-barres -->
+                        <form id="barcode-search-form" style="margin-top: 1.8rem;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="barcode-input" class="form-label">Ou saisir le code-barres (EAN / UPC) :</label>
+                                <div class="input-group-row">
+                                    <input type="text" id="barcode-input" class="form-input" inputmode="numeric" pattern="[0-9]*" placeholder="Ex : 3017620422003" required>
+                                    <button type="submit" class="btn btn-primary" aria-label="Rechercher le produit">Rechercher</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Produits réels de démonstration -->
+                        <div class="quick-samples">
+                            <span class="form-label" style="font-size:1.3rem;">Tester avec un produit réel :</span>
+                            <div class="sample-chips">
+                                <button type="button" class="btn btn-secondary btn-sm sample-btn" data-barcode="3017620422003">🍫 Nutella</button>
+                                <button type="button" class="btn btn-secondary btn-sm sample-btn" data-barcode="3168930010265">🌾 Flocons d'avoine</button>
+                                <button type="button" class="btn btn-secondary btn-sm sample-btn" data-barcode="3033491276606">🥣 Yaourt Grec</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ONGLET 2 : CALCULATEUR MANUEL SANS CODE-BARRES -->
+                    <div id="panel-manual-calc" role="tabpanel" aria-labelledby="tab-manual-calc" class="hidden">
+                        <form id="manual-nutrition-form">
+                            <div class="form-group">
+                                <label for="manual-food-name" class="form-label">Nom de l'aliment ou du plat *</label>
+                                <input type="text" id="manual-food-name" class="form-input" placeholder="Ex : Poulet grillé maison" required>
+                            </div>
+
+                            <div class="grid-2-cols">
+                                <div class="form-group">
+                                    <label for="manual-kcal" class="form-label">Calories (kcal) *</label>
+                                    <input type="number" id="manual-kcal" class="form-input manual-calc-input" min="0" step="any" value="150" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="manual-satfat" class="form-label">Graisses saturées (g) *</label>
+                                    <input type="number" id="manual-satfat" class="form-input manual-calc-input" min="0" step="any" value="1.5" required>
+                                </div>
+                            </div>
+
+                            <div class="grid-2-cols">
+                                <div class="form-group">
+                                    <label for="manual-sugars" class="form-label">Sucres (g) *</label>
+                                    <input type="number" id="manual-sugars" class="form-input manual-calc-input" min="0" step="any" value="2" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="manual-proteins" class="form-label">Protéines (g) *</label>
+                                    <input type="number" id="manual-proteins" class="form-input manual-calc-input" min="0" step="any" value="22" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="manual-fiber" class="form-label">Fibres alimentaires (g)</label>
+                                <input type="number" id="manual-fiber" class="form-input manual-calc-input" min="0" step="any" value="0">
+                            </div>
+
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--brand-light);padding:1.4rem;border-radius:var(--radius-md);margin-bottom:1.6rem;">
+                                <span style="font-weight:700;color:var(--brand-text);">Score calculé en direct :</span>
+                                <span style="font-size:2.4rem;font-weight:800;color:var(--brand-text);"><span id="manual-live-points">2</span> pts</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full">
+                                Ajouter cet aliment au journal
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+
+            <!-- COLONNE DROITE : RÉSULTAT PRODUIT & JOURNAL ALIMENTAIRE -->
+            <div class="column-stack">
+
+                <!-- État de chargement API -->
+                <div id="api-loader" class="card hidden" style="text-align:center;padding:3.6rem 2rem;" aria-live="polite">
+                    <div class="spinner" aria-hidden="true"></div>
+                    <p style="font-weight:700;font-size:1.6rem;">Interrogation d'Open Food Facts...</p>
+                    <p style="font-size:1.3rem;color:var(--text-muted);margin-top:0.4rem;">Récupération des valeurs nutritionnelles pour 100g</p>
+                </div>
+
+                <!-- Fiche Produit Scanné -->
+                <section id="scanned-product-card" class="card hidden" aria-live="polite" aria-labelledby="scanned-product-title">
+                    <div class="product-header">
+                        <img id="prod-img" class="product-thumb" src="https://placehold.co/120x120/e2e8f0/475569?text=Produit" alt="Visuel du produit">
+                        <div class="product-meta">
+                            <div class="badge-row">
+                                <span id="prod-brand" class="badge badge-brand">Marque</span>
+                                <span id="prod-nutriscore" class="badge" style="background:var(--border-subtle);color:var(--text-primary);">Nutri-Score ?</span>
+                            </div>
+                            <h2 id="scanned-product-title" class="product-title">Nom du produit</h2>
+                            <p id="prod-code-display" style="font-size:1.2rem;color:var(--text-muted);">Code : 0000000000000</p>
+                        </div>
+                        <div class="points-pill">
+                            <span id="prod-calculated-points" class="points-pill-num">0</span>
+                            <span class="points-pill-unit">Points</span>
+                        </div>
+                    </div>
+
+                    <!-- Ajustement de la portion en grammes/ml -->
+                    <div class="portion-control">
+                        <div class="portion-top">
+                            <label for="portion-range" class="form-label" style="margin:0;">Quantité consommée :</label>
+                            <div class="portion-number-box">
+                                <input type="number" id="portion-number" class="portion-number-input" min="1" max="2000" value="100" aria-label="Quantité en grammes ou millilitres">
+                                <span style="font-weight:700;font-size:1.4rem;color:var(--text-muted);">g / ml</span>
+                            </div>
+                        </div>
+
+                        <input type="range" id="portion-range" min="5" max="500" step="5" value="100">
+
+                        <div class="sample-chips" style="margin-top:0;">
+                            <button type="button" class="btn btn-secondary btn-sm portion-preset" data-grams="15">15g (1 c.à.s)</button>
+                            <button type="button" class="btn btn-secondary btn-sm portion-preset" data-grams="30">30g</button>
+                            <button type="button" class="btn btn-secondary btn-sm portion-preset" data-grams="100">100g</button>
+                            <button type="button" class="btn btn-secondary btn-sm portion-preset" data-grams="125">125g</button>
+                            <button type="button" class="btn btn-secondary btn-sm portion-preset" data-grams="250">250ml</button>
+                        </div>
+                    </div>
+
+                    <!-- Tableau complet des nutriments récupérés -->
+                    <div style="margin-top:1.4rem;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:1.2rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">Valeurs pour cette portion</span>
+                        <span id="prod-base-100g" style="font-size:1.2rem;font-weight:600;color:var(--text-muted);">Base : 0 pts / 100g</span>
+                    </div>
+
+                    <div class="nutrients-grid">
+                        <div class="nutrient-cell"><span class="nutrient-name">Calories</span><span id="val-kcal" class="nutrient-val">0 kcal</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Protéines</span><span id="val-proteins" class="nutrient-val">0 g</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Glucides</span><span id="val-carbs" class="nutrient-val">0 g</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Sucres</span><span id="val-sugars" class="nutrient-val">0 g</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Lipides</span><span id="val-fat" class="nutrient-val">0 g</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Gr. Saturées</span><span id="val-satfat" class="nutrient-val">0 g</span></div>
+                        <div class="nutrient-cell"><span class="nutrient-name">Fibres</span><span id="val-fiber" class="nutrient-val">0 g</span></div>
+                    </div>
+
+                    <button type="button" id="btn-add-scanned-to-journal" class="btn btn-primary btn-full">
+                        Ajouter au journal (<span id="btn-add-date-label">Aujourd'hui</span>)
+                    </button>
+                </section>
+
+                <!-- Journal Alimentaire du Jour -->
+                <section class="card" aria-labelledby="journal-section-title">
+                    <div class="card-header">
+                        <h2 id="journal-section-title" class="card-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2.2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                            Journal alimentaire
+                        </h2>
+                        <button type="button" id="btn-reset-day" class="btn btn-danger btn-sm hidden">
+                            Réinitialiser la journée
+                        </button>
+                    </div>
+
+                    <div id="journal-entries-container" class="journal-list">
+                        <div id="journal-empty-state" class="empty-state">
+                            <p style="font-weight:700;font-size:1.5rem;color:var(--text-primary);">Aucun aliment enregistré pour cette date.</p>
+                            <p style="font-size:1.3rem;margin-top:0.4rem;">Scannez un code-barres ou utilisez le calculateur libre pour suivre vos points.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- PIED DE PAGE -->
+    <footer class="app-footer">
+        <p><strong>NutriPoints</strong> — Application autonome propulsée par les données ouvertes d'<a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a>. Vos données restent enregistrées localement sur votre navigateur.</p>
+    </footer>
+
+    <!-- MODALE : TRANSPARENCE DE LA FORMULE -->
+    <div id="formula-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="formula-modal-title">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="formula-modal-title" class="modal-title">Algorithme de calcul NutriPoints</h2>
+                <button type="button" id="btn-close-formula" class="btn btn-secondary btn-icon btn-sm" aria-label="Fermer la fenêtre">✕</button>
+            </div>
+            <p style="font-size:1.4rem;color:var(--text-secondary);">
+                Inspiré des systèmes nutritionnels modernes (<em>SmartPoints / PersonalPoints</em>), ce calcul pondère la densité énergétique, les sucres rapides et les graisses saturées face au pouvoir rassasiant des protéines et des fibres :
+            </p>
+            <div class="formula-box">
+                Points = (Calories × 0,0305)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Graisses saturées × 0,275)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Sucres × 0,12)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- (Protéines × 0,098)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- (Fibres × 0,05)
+            </div>
+            <p style="font-size:1.3rem;color:var(--text-muted);">
+                Le résultat est arrondi à l'entier le plus proche avec un plancher minimum de <strong>0 point</strong>.
+            </p>
+            <div class="modal-footer">
+                <button type="button" id="btn-ack-formula" class="btn btn-primary">Compris</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE : CONFIRMATION DE RÉINITIALISATION DE LA JOURNÉE -->
+    <div id="reset-confirm-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="reset-modal-title" class="modal-title">Réinitialiser cette journée ?</h2>
+                <button type="button" id="btn-cancel-reset-x" class="btn btn-secondary btn-icon btn-sm" aria-label="Fermer">✕</button>
+            </div>
+            <p style="font-size:1.4rem;color:var(--text-secondary);">
+                Voulez-vous supprimer toutes les entrées alimentaires enregistrées pour cette date ? Cette action est irréversible.
+            </p>
+            <div class="modal-footer">
+                <button type="button" id="btn-cancel-reset" class="btn btn-secondary">Annuler</button>
+                <button type="button" id="btn-confirm-reset" class="btn btn-danger">Oui, tout effacer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         8. LOGIQUE JAVASCRIPT ES6+ ORIENTÉE OBJET
+         ========================================================================== -->
+    <script>
+        /**
+         * Moteur de calcul nutritionnel transparent (Algorithme NutriPoints)
+         */
+        class PointsCalculator {
+            static compute({ kcal = 0, saturatedFat = 0, sugars = 0, proteins = 0, fiber = 0 }, ratio = 1) {
+                const c = Math.max(0, Number(kcal) || 0) * ratio;
+                const sf = Math.max(0, Number(saturatedFat) || 0) * ratio;
+                const s = Math.max(0, Number(sugars) || 0) * ratio;
+                const p = Math.max(0, Number(proteins) || 0) * ratio;
+                const f = Math.max(0, Number(fiber) || 0) * ratio;
+
+                const raw = (c * 0.0305) + (sf * 0.275) + (s * 0.12) - (p * 0.098) - (f * 0.05);
+                return Math.max(0, Math.round(raw));
+            }
+        }
+
+        /**
+         * Gestionnaire de persistance locale (localStorage)
+         */
+        class StorageService {
+            constructor() {
+                this.KEYS = {
+                    BUDGET: 'nutripoints_v2_daily_budget',
+                    JOURNALS: 'nutripoints_v2_journals_by_date',
+                    THEME: 'nutripoints_v2_theme'
+                };
+            }
+
+            getDailyBudget() {
+                const val = parseInt(localStorage.getItem(this.KEYS.BUDGET), 10);
+                return (!isNaN(val) && val >= 10 && val <= 200) ? val : 30;
+            }
+
+            saveDailyBudget(budget) {
+                localStorage.setItem(this.KEYS.BUDGET, String(budget));
+            }
+
+            getAllJournals() {
+                try {
+                    const data = JSON.parse(localStorage.getItem(this.KEYS.JOURNALS) || '{}');
+                    return (data && typeof data === 'object') ? data : {};
+                } catch {
+                    return {};
+                }
+            }
+
+            getEntriesForDate(dateKey) {
+                const all = this.getAllJournals();
+                return Array.isArray(all[dateKey]) ? all[dateKey] : [];
+            }
+
+            saveEntriesForDate(dateKey, entries) {
+                const all = this.getAllJournals();
+                all[dateKey] = entries;
+                localStorage.setItem(this.KEYS.JOURNALS, JSON.stringify(all));
+            }
+
+            getTheme() {
+                return localStorage.getItem(this.KEYS.THEME) || 'light';
+            }
+
+            saveTheme(theme) {
+                localStorage.setItem(this.KEYS.THEME, theme);
+            }
+        }
+
+        /**
+         * Client API Open Food Facts v2
+         */
+        class OpenFoodFactsClient {
+            static async fetchProductByBarcode(barcode) {
+                const cleanCode = encodeURIComponent(barcode.trim());
+                const fields = 'product_name,product_name_fr,brands,image_front_small_url,image_url,nutriscore_grade,nutriments,serving_quantity';
+                const url = `https://world.openfoodfacts.org/api/v2/product/${cleanCode}.json?fields=${fields}`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur serveur (${response.status})`);
+                }
+
+                const json = await response.json();
+                if (json.status !== 1 || !json.product) {
+                    return null;
+                }
+
+                const p = json.product;
+                const n = p.nutriments || {};
+
+                // Gestion kcal directes ou conversion depuis kJ
+                let kcal100 = parseFloat(n['energy-kcal_100g']);
+                if (isNaN(kcal100) && !isNaN(parseFloat(n['energy_100g']))) {
+                    kcal100 = parseFloat(n['energy_100g']) / 4.184;
+                }
+
+                const suggestedServing = parseFloat(p.serving_quantity);
+
+                return {
+                    barcode: barcode.trim(),
+                    name: p.product_name_fr || p.product_name || 'Produit alimentaire',
+                    brand: p.brands ? p.brands.split(',')[0].trim() : 'Marque non précisée',
+                    image: p.image_front_small_url || p.image_url || 'https://placehold.co/120x120/e2e8f0/475569?text=Aliment',
+                    nutriscore: (p.nutriscore_grade || '?').toUpperCase(),
+                    defaultPortion: (!isNaN(suggestedServing) && suggestedServing > 0) ? Math.round(suggestedServing) : 100,
+                    nutrients100g: {
+                        kcal: Math.max(0, kcal100 || 0),
+                        proteins: Math.max(0, parseFloat(n['proteins_100g']) || 0),
+                        carbs: Math.max(0, parseFloat(n['carbohydrates_100g']) || 0),
+                        sugars: Math.max(0, parseFloat(n['sugars_100g']) || 0),
+                        fat: Math.max(0, parseFloat(n['fat_100g']) || 0),
+                        saturatedFat: Math.max(0, parseFloat(n['saturated-fat_100g']) || 0),
+                        fiber: Math.max(0, parseFloat(n['fiber_100g']) || 0)
+                    }
+                };
+            }
+        }
+
+        /**
+         * Contrôleur du Scanner Caméra (html5-qrcode avec bascule avant/arrière)
+         */
+        class BarcodeScannerController {
+            constructor(onCodeDetected, onError) {
+                this.onCodeDetected = onCodeDetected;
+                this.onError = onError;
+                this.scanner = null;
+                this.isScanning = false;
+                this.facingMode = 'environment'; // Caméra arrière par défaut
+            }
+
+            async start() {
+                const placeholder = document.getElementById('camera-placeholder');
+                const wrapper = document.getElementById('camera-active-wrapper');
+                placeholder.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+
+                try {
+                    if (!this.scanner) {
+                        this.scanner = new Html5Qrcode('reader');
+                    }
+                    await this.scanner.start(
+                        { facingMode: this.facingMode },
+                        { fps: 10, qrbox: { width: 240, height: 140 } },
+                        (decodedText) => {
+                            if (navigator.vibrate) navigator.vibrate(90);
+                            this.stop();
+                            this.onCodeDetected(decodedText);
+                        },
+                        () => {}
+                    );
+                    this.isScanning = true;
+                } catch (err) {
+                    await this.stop();
+                    this.onError('Accès caméra impossible. Vérifiez les autorisations ou saisissez le code manuellement.');
+                }
+            }
+
+            async switchCamera() {
+                this.facingMode = (this.facingMode === 'environment') ? 'user' : 'environment';
+                if (this.isScanning) {
+                    await this.stop();
+                    await this.start();
+                }
+            }
+
+            async stop() {
+                const placeholder = document.getElementById('camera-placeholder');
+                const wrapper = document.getElementById('camera-active-wrapper');
+                if (this.scanner && this.isScanning) {
+                    try {
+                        await this.scanner.stop();
+                        this.scanner.clear();
+                    } catch {
+                        // Ignorer si déjà arrêté
+                    }
+                }
+                this.isScanning = false;
+                wrapper.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Contrôleur Principal de l'Application NutriPoints
+         */
+        class NutriPointsApp {
+            constructor() {
+                this.storage = new StorageService();
+                this.dailyBudget = this.storage.getDailyBudget();
+                this.selectedDate = this.getTodayISO();
+                this.currentProduct = null;
+
+                this.scanner = new BarcodeScannerController(
+                    (code) => this.handleBarcodeFound(code),
+                    (msg) => this.showToast(msg, 'error')
+                );
+
+                this.initTheme();
+                this.bindEvents();
+                this.updateLiveManualCalculator();
+                this.renderDashboardAndJournal();
+            }
+
+            getTodayISO() {
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                return new Date(now.getTime() - offset).toISOString().split('T')[0];
+            }
+
+            shiftDate(days) {
+                const [y, m, d] = this.selectedDate.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d + days);
+                const offset = dateObj.getTimezoneOffset() * 60000;
+                this.selectedDate = new Date(dateObj.getTime() - offset).toISOString().split('T')[0];
+                this.renderDashboardAndJournal();
+            }
+
+            formatDisplayDate(isoStr) {
+                const today = this.getTodayISO();
+                if (isoStr === today) return "Aujourd'hui";
+                const [y, m, d] = isoStr.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                return dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' });
+            }
+
+            initTheme() {
+                const saved = this.storage.getTheme();
+                this.applyTheme(saved);
+            }
+
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                const moon = document.getElementById('icon-moon');
+                const sun = document.getElementById('icon-sun');
+                if (theme === 'dark') {
+                    moon.classList.add('hidden');
+                    sun.classList.remove('hidden');
+                } else {
+                    sun.classList.add('hidden');
+                    moon.classList.remove('hidden');
+                }
+                this.storage.saveTheme(theme);
+            }
+
+            bindEvents() {
+                // Thème sombre / clair
+                document.getElementById('btn-toggle-theme').addEventListener('click', () => {
+                    const current = document.documentElement.getAttribute('data-theme');
+                    this.applyTheme(current === 'dark' ? 'light' : 'dark');
+                });
+
+                // Modale formule
+                const formulaModal = document.getElementById('formula-modal');
+                document.getElementById('btn-open-formula').addEventListener('click', () => formulaModal.classList.remove('hidden'));
+                document.getElementById('btn-close-formula').addEventListener('click', () => formulaModal.classList.add('hidden'));
+                document.getElementById('btn-ack-formula').addEventListener('click', () => formulaModal.classList.add('hidden'));
+
+                // Modification du capital points journalier
+                const budgetForm = document.getElementById('inline-budget-form');
+                const budgetInput = document.getElementById('daily-budget-input');
+                document.getElementById('btn-edit-budget').addEventListener('click', () => {
+                    budgetInput.value = this.dailyBudget;
+                    budgetForm.classList.remove('hidden');
+                    budgetInput.focus();
+                    budgetInput.select();
+                });
+                document.getElementById('btn-cancel-budget').addEventListener('click', () => {
+                    budgetForm.classList.add('hidden');
+                });
+                budgetForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const newVal = parseInt(budgetInput.value, 10);
+                    if (!isNaN(newVal) && newVal >= 10 && newVal <= 200) {
+                        this.dailyBudget = newVal;
+                        this.storage.saveDailyBudget(newVal);
+                        budgetForm.classList.add('hidden');
+                        this.renderDashboardAndJournal();
+                        this.showToast(`Capital journalier mis à jour : ${newVal} points.`);
+                    }
+                });
+
+                // Navigation entre dates
+                document.getElementById('btn-prev-day').addEventListener('click', () => this.shiftDate(-1));
+                document.getElementById('btn-next-day').addEventListener('click', () => this.shiftDate(1));
+                document.getElementById('btn-today').addEventListener('click', () => {
+                    this.selectedDate = this.getTodayISO();
+                    this.renderDashboardAndJournal();
+                });
+
+                // Onglets Scanner vs Calculateur libre
+                const tabScanner = document.getElementById('tab-scanner');
+                const tabManual = document.getElementById('tab-manual-calc');
+                const panelScanner = document.getElementById('panel-scanner');
+                const panelManual = document.getElementById('panel-manual-calc');
+
+                tabScanner.addEventListener('click', () => {
+                    tabScanner.setAttribute('aria-selected', 'true');
+                    tabManual.setAttribute('aria-selected', 'false');
+                    panelScanner.classList.remove('hidden');
+                    panelManual.classList.add('hidden');
+                });
+
+                tabManual.addEventListener('click', () => {
+                    this.scanner.stop();
+                    tabManual.setAttribute('aria-selected', 'true');
+                    tabScanner.setAttribute('aria-selected', 'false');
+                    panelManual.classList.remove('hidden');
+                    panelScanner.classList.add('hidden');
+                });
+
+                // Contrôles Caméra
+                document.getElementById('btn-start-camera').addEventListener('click', () => this.scanner.start());
+                document.getElementById('btn-stop-camera').addEventListener('click', () => this.scanner.stop());
+                document.getElementById('btn-switch-camera').addEventListener('click', () => this.scanner.switchCamera());
+
+                // Recherche par code-barres manuel & boutons échantillons
+                document.getElementById('barcode-search-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const code = document.getElementById('barcode-input').value.trim();
+                    if (code) this.loadProduct(code);
+                });
+
+                document.querySelectorAll('.sample-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const code = btn.getAttribute('data-barcode');
+                        document.getElementById('barcode-input').value = code;
+                        this.loadProduct(code);
+                    });
+                });
+
+                // Ajustement de portion du produit scanné
+                const portionRange = document.getElementById('portion-range');
+                const portionNumber = document.getElementById('portion-number');
+
+                portionRange.addEventListener('input', (e) => {
+                    const g = parseInt(e.target.value, 10) || 100;
+                    portionNumber.value = g;
+                    this.updateScannedProductView(g);
+                });
+
+                portionNumber.addEventListener('input', (e) => {
+                    let g = parseInt(e.target.value, 10);
+                    if (isNaN(g) || g < 1) g = 1;
+                    if (g > 2000) g = 2000;
+                    portionRange.value = Math.min(500, g);
+                    this.updateScannedProductView(g);
+                });
+
+                document.querySelectorAll('.portion-preset').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const g = parseInt(btn.getAttribute('data-grams'), 10);
+                        portionNumber.value = g;
+                        portionRange.value = Math.min(500, g);
+                        this.updateScannedProductView(g);
+                    });
+                });
+
+                // Ajout produit scanné au journal
+                document.getElementById('btn-add-scanned-to-journal').addEventListener('click', () => {
+                    if (!this.currentProduct) return;
+                    const grams = parseInt(portionNumber.value, 10) || 100;
+                    const ratio = grams / 100;
+                    const pts = PointsCalculator.compute(this.currentProduct.nutrients100g, ratio);
+                    const kcal = Math.round(this.currentProduct.nutrients100g.kcal * ratio);
+
+                    this.addJournalEntry({
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                        name: this.currentProduct.name,
+                        detail: `${grams} g/ml • ${kcal} kcal`,
+                        points: pts
+                    });
+                });
+
+                // Calculateur manuel libre
+                document.querySelectorAll('.manual-calc-input').forEach(input => {
+                    input.addEventListener('input', () => this.updateLiveManualCalculator());
+                });
+
+                document.getElementById('manual-nutrition-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('manual-food-name').value.trim();
+                    const kcal = parseFloat(document.getElementById('manual-kcal').value) || 0;
+                    const pts = this.updateLiveManualCalculator();
+
+                    if (!name) return;
+
+                    this.addJournalEntry({
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                        name: name,
+                        detail: `Calcul libre • ${Math.round(kcal)} kcal`,
+                        points: pts
+                    });
+                    document.getElementById('manual-food-name').value = '';
+                });
+
+                // Réinitialisation de la journée (Modale accessible)
+                const resetModal = document.getElementById('reset-confirm-modal');
+                document.getElementById('btn-reset-day').addEventListener('click', () => resetModal.classList.remove('hidden'));
+                document.getElementById('btn-cancel-reset').addEventListener('click', () => resetModal.classList.add('hidden'));
+                document.getElementById('btn-cancel-reset-x').addEventListener('click', () => resetModal.classList.add('hidden'));
+                document.getElementById('btn-confirm-reset').addEventListener('click', () => {
+                    this.storage.saveEntriesForDate(this.selectedDate, []);
+                    resetModal.classList.add('hidden');
+                    this.renderDashboardAndJournal();
+                    this.showToast('La journée a été réinitialisée.');
+                });
+
+                // Fermeture modales via touche Échap
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        formulaModal.classList.add('hidden');
+                        resetModal.classList.add('hidden');
+                        budgetForm.classList.add('hidden');
+                    }
+                });
+            }
+
+            handleBarcodeFound(code) {
+                document.getElementById('barcode-input').value = code;
+                this.showToast(`Code-barres détecté : ${code}`);
+                this.loadProduct(code);
+            }
+
+            async loadProduct(barcode) {
+                const loader = document.getElementById('api-loader');
+                const productCard = document.getElementById('scanned-product-card');
+
+                productCard.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                try {
+                    const product = await OpenFoodFactsClient.fetchProductByBarcode(barcode);
+                    if (!product) {
+                        this.showToast(`Produit introuvable sur Open Food Facts (${barcode}).`, 'error');
+                        return;
+                    }
+
+                    this.currentProduct = product;
+                    this.renderScannedProductCard();
+                } catch (err) {
+                    this.showToast('Erreur de connexion à Open Food Facts. Réessayez.', 'error');
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            }
+
+            renderScannedProductCard() {
+                const p = this.currentProduct;
+                if (!p) return;
+
+                document.getElementById('prod-img').src = p.image;
+                document.getElementById('prod-brand').textContent = p.brand;
+                document.getElementById('scanned-product-title').textContent = p.name;
+                document.getElementById('prod-code-display').textContent = `Code : ${p.barcode}`;
+
+                const nsEl = document.getElementById('prod-nutriscore');
+                nsEl.textContent = `Nutri-Score ${p.nutriscore}`;
+                const nsPalette = {
+                    A: 'background:#dcfce7;color:#14532d;',
+                    B: 'background:#ecfccb;color:#365314;',
+                    C: 'background:#fef3c7;color:#78350f;',
+                    D: 'background:#ffedd5;color:#7c2d12;',
+                    E: 'background:#fee2e2;color:#7f1d1d;'
+                };
+                nsEl.style.cssText = nsPalette[p.nutriscore] || 'background:var(--border-subtle);color:var(--text-primary);';
+
+                const pts100 = PointsCalculator.compute(p.nutrients100g, 1);
+                document.getElementById('prod-base-100g').textContent = `Base : ${pts100} pts / 100g`;
+
+                const portionInput = document.getElementById('portion-number');
+                const portionRange = document.getElementById('portion-range');
+                portionInput.value = p.defaultPortion;
+                portionRange.value = Math.min(500, p.defaultPortion);
+
+                this.updateScannedProductView(p.defaultPortion);
+                document.getElementById('scanned-product-card').classList.remove('hidden');
+            }
+
+            updateScannedProductView(grams) {
+                if (!this.currentProduct) return;
+                const ratio = grams / 100;
+                const n = this.currentProduct.nutrients100g;
+
+                const pts = PointsCalculator.compute(n, ratio);
+                document.getElementById('prod-calculated-points').textContent = pts;
+
+                document.getElementById('val-kcal').textContent = `${Math.round(n.kcal * ratio)} kcal`;
+                document.getElementById('val-proteins').textContent = `${(n.proteins * ratio).toFixed(1)} g`;
+                document.getElementById('val-carbs').textContent = `${(n.carbs * ratio).toFixed(1)} g`;
+                document.getElementById('val-sugars').textContent = `${(n.sugars * ratio).toFixed(1)} g`;
+                document.getElementById('val-fat').textContent = `${(n.fat * ratio).toFixed(1)} g`;
+                document.getElementById('val-satfat').textContent = `${(n.saturatedFat * ratio).toFixed(1)} g`;
+                document.getElementById('val-fiber').textContent = `${(n.fiber * ratio).toFixed(1)} g`;
+            }
+
+            updateLiveManualCalculator() {
+                const nutrients = {
+                    kcal: document.getElementById('manual-kcal').value,
+                    saturatedFat: document.getElementById('manual-satfat').value,
+                    sugars: document.getElementById('manual-sugars').value,
+                    proteins: document.getElementById('manual-proteins').value,
+                    fiber: document.getElementById('manual-fiber').value
+                };
+                const pts = PointsCalculator.compute(nutrients, 1);
+                document.getElementById('manual-live-points').textContent = pts;
+                return pts;
+            }
+
+            addJournalEntry(entry) {
+                const entries = this.storage.getEntriesForDate(this.selectedDate);
+                entries.unshift(entry);
+                this.storage.saveEntriesForDate(this.selectedDate, entries);
+                this.renderDashboardAndJournal();
+                this.showToast(`${entry.name} (${entry.points} pts) ajouté au journal.`);
+            }
+
+            removeJournalEntry(id) {
+                const entries = this.storage.getEntriesForDate(this.selectedDate).filter(e => e.id !== id);
+                this.storage.saveEntriesForDate(this.selectedDate, entries);
+                this.renderDashboardAndJournal();
+                this.showToast('Aliment supprimé du journal.');
+            }
+
+            renderDashboardAndJournal() {
+                const entries = this.storage.getEntriesForDate(this.selectedDate);
+                const consumed = entries.reduce((sum, item) => sum + item.points, 0);
+                const remaining = this.dailyBudget - consumed;
+
+                // Mise à jour labels de date
+                const dateLabel = this.formatDisplayDate(this.selectedDate);
+                document.getElementById('selected-date-text').textContent = dateLabel;
+                document.getElementById('btn-add-date-label').textContent = dateLabel;
+                const btnToday = document.getElementById('btn-today');
+                if (this.selectedDate === this.getTodayISO()) {
+                    btnToday.classList.add('hidden');
+                } else {
+                    btnToday.classList.remove('hidden');
+                }
+
+                // Mise à jour chiffres clés
+                document.getElementById('stat-consumed').textContent = consumed;
+                document.getElementById('stat-budget').textContent = this.dailyBudget;
+                document.getElementById('stat-remaining').textContent = remaining;
+
+                // Mise à jour jauge circulaire SVG (circonférence = 2 * PI * 50 ≈ 314.16)
+                const circumference = 314.16;
+                const circle = document.getElementById('gauge-progress-circle');
+                const gaugeVal = document.getElementById('gauge-remaining-value');
+                const gaugeCap = document.getElementById('gauge-remaining-caption');
+                const gaugeAria = document.getElementById('gauge-aria-label');
+
+                const ratioRemaining = Math.max(0, Math.min(1, remaining / this.dailyBudget));
+                const offset = circumference * (1 - ratioRemaining);
+                circle.style.strokeDashoffset = offset.toFixed(2);
+
+                if (remaining >= 0) {
+                    gaugeVal.textContent = remaining;
+                    gaugeCap.textContent = remaining > 1 ? 'pts restants' : 'pt restant';
+                    circle.style.stroke = (remaining <= this.dailyBudget * 0.15) ? '#d97706' : 'var(--brand-primary)';
+                    document.getElementById('stat-remaining-box').style.color = 'var(--text-primary)';
+                    gaugeAria.setAttribute('aria-label', `${remaining} points restants sur ${this.dailyBudget}`);
+                } else {
+                    const over = Math.abs(remaining);
+                    gaugeVal.textContent = `+${over}`;
+                    gaugeCap.textContent = 'dépassement';
+                    circle.style.stroke = '#dc2626';
+                    document.getElementById('stat-remaining-box').style.color = 'var(--danger-color)';
+                    gaugeAria.setAttribute('aria-label', `Dépassement de ${over} points sur un capital de ${this.dailyBudget}`);
+                }
+
+                // Rendu de la liste du journal
+                const container = document.getElementById('journal-entries-container');
+                const emptyState = document.getElementById('journal-empty-state');
+                const resetBtn = document.getElementById('btn-reset-day');
+
+                Array.from(container.children).forEach(el => {
+                    if (el.id !== 'journal-empty-state') el.remove();
+                });
+
+                if (entries.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    resetBtn.classList.add('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                resetBtn.classList.remove('hidden');
+
+                entries.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'journal-item';
+
+                    const info = document.createElement('div');
+                    info.className = 'journal-item-info';
+
+                    const title = document.createElement('p');
+                    title.className = 'journal-item-name';
+                    title.textContent = item.name;
+
+                    const sub = document.createElement('p');
+                    sub.className = 'journal-item-sub';
+                    sub.textContent = item.detail;
+
+                    info.append(title, sub);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'journal-item-actions';
+
+                    const ptsBadge = document.createElement('span');
+                    ptsBadge.className = 'journal-pts-badge';
+                    ptsBadge.textContent = `${item.points} pts`;
+
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'btn btn-danger btn-icon btn-sm';
+                    delBtn.setAttribute('aria-label', `Supprimer ${item.name}`);
+                    delBtn.textContent = '✕';
+                    delBtn.addEventListener('click', () => this.removeJournalEntry(item.id));
+
+                    actions.append(ptsBadge, delBtn);
+                    row.append(info, actions);
+                    container.appendChild(row);
+                });
+            }
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.25s ease';
+                    setTimeout(() => toast.remove(), 260);
+                }, 3400);
+            }
+        }
+
+        // Initialisation au chargement du DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            window.nutriApp = new NutriPointsApp();
+        });
+    </script>
+</body>
+</html>

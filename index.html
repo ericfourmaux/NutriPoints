@@ -3,2963 +3,1187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NutriPoints — Scanner de Codes-Barres & Suivi Nutritionnel</title>
-    <meta name="description" content="Application autonome de scan de codes-barres, calcul de points nutritionnels et suivi journalier et mensuel des calories et macronutriments.">
-
-    <!-- Bibliothèque ZXing UMD multi-format (EAN-13, EAN-8, UPC-A, UPC-E, Code-128) -->
-    <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-
+    <title>NutriPoints - Suivi Alimentaire & Points</title>
+    <!-- Bibliothèques externes via CDN (ZXing pour le décodage de code-barres de secours) -->
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
-        /* ==========================================================================
-           1. FONDATIONS & VARIABLES CSS (Base 62.5% => 1rem = 10px)
-           ========================================================================== */
         :root {
-            --bg-app: #f4f7f5;
-            --bg-surface: #ffffff;
-            --bg-surface-alt: #eef3f0;
-            --bg-elevated: #ffffff;
-            --text-primary: #111c17;
-            --text-secondary: #475850;
-            --text-muted: #6c7d75;
-            --border-color: #d7e2dc;
-            --border-strong: #b4c7bd;
-
-            --brand-primary: #15803d;
-            --brand-primary-hover: #166534;
-            --brand-light: #dcfce7;
-            --brand-text: #14532d;
-
-            --accent-blue: #0369a1;
-            --accent-blue-light: #e0f2fe;
-            --accent-amber: #b45309;
-            --accent-amber-light: #fef3c7;
-            --accent-red: #b91c1c;
-            --accent-red-light: #fee2e2;
-            --accent-purple: #6d28d9;
-            --accent-purple-light: #ede9fe;
-
-            --shadow-sm: 0 1px 3px rgba(17, 28, 23, 0.06), 0 1px 2px rgba(17, 28, 23, 0.04);
-            --shadow-md: 0 6px 16px rgba(17, 28, 23, 0.08);
-            --shadow-lg: 0 16px 32px rgba(17, 28, 23, 0.14);
-
-            --radius-sm: 0.8rem;
-            --radius-md: 1.2rem;
-            --radius-lg: 1.8rem;
-            --radius-full: 9999px;
-
-            --focus-ring: 0 0 0 0.3rem rgba(21, 128, 61, 0.35);
-            --transition-fast: 160ms ease;
-            --transition-normal: 260ms cubic-bezier(0.22, 1, 0.36, 1);
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-light: #d1fae5;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 0.8rem;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
 
         [data-theme="dark"] {
-            --bg-app: #0d1411;
-            --bg-surface: #151f1b;
-            --bg-surface-alt: #1d2b25;
-            --bg-elevated: #22322b;
-            --text-primary: #f0f5f2;
-            --text-secondary: #b8c7bf;
-            --text-muted: #889b91;
-            --border-color: #293b33;
-            --border-strong: #3b5449;
-
-            --brand-primary: #22c55e;
-            --brand-primary-hover: #4ade80;
-            --brand-light: rgba(34, 197, 94, 0.16);
-            --brand-text: #86efac;
-
-            --accent-blue: #38bdf8;
-            --accent-blue-light: rgba(56, 189, 248, 0.16);
-            --accent-amber: #fbbf24;
-            --accent-amber-light: rgba(251, 191, 36, 0.16);
-            --accent-red: #f87171;
-            --accent-red-light: rgba(248, 113, 113, 0.16);
-            --accent-purple: #a78bfa;
-            --accent-purple-light: rgba(167, 139, 250, 0.16);
-
-            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 18px 36px rgba(0, 0, 0, 0.55);
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --primary-light: rgba(16, 185, 129, 0.15);
         }
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        /* Thèmes de couleur personnalisés */
+        [data-accent="green"] { --primary: #10b981; --primary-hover: #059669; --primary-light: #d1fae5; }
+        [data-accent="pink"]  { --primary: #ec4899; --primary-hover: #db2777; --primary-light: #fce7f3; }
+        [data-accent="blue"]  { --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe; }
 
         html {
             font-size: 62.5%; /* 1rem = 10px */
-            scroll-behavior: smooth;
+            box-sizing: border-box;
+        }
+
+        *, *::before, *::after {
+            box-sizing: inherit;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
             font-size: 1.6rem;
             line-height: 1.5;
-            background-color: var(--bg-app);
-            color: var(--text-primary);
-            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
             display: flex;
-            flex-direction: column;
-            transition: background-color var(--transition-normal), color var(--transition-normal);
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        /* Accessibilité : Focus & Lecteurs d'écran */
-        :focus-visible {
-            outline: 0.2rem solid var(--brand-primary);
-            outline-offset: 0.2rem;
-            box-shadow: var(--focus-ring);
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 0.1rem;
-            height: 0.1rem;
-            padding: 0;
-            margin: -0.1rem;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .skip-link {
-            position: absolute;
-            top: -5rem;
-            left: 1.6rem;
-            background: var(--brand-primary);
-            color: #ffffff;
-            padding: 1rem 1.6rem;
-            border-radius: var(--radius-sm);
+        h1 {
+            font-size: 2.2rem;
+            margin: 0;
+            color: var(--primary);
             font-weight: 700;
-            z-index: 1000;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        button, .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.6rem;
+            border-radius: var(--radius);
+            font-size: 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
             text-decoration: none;
         }
 
-        .skip-link:focus {
-            top: 1.6rem;
+        button:hover, .btn:hover {
+            background-color: var(--primary-hover);
         }
 
-        /* ==========================================================================
-           2. EN-TÊTE & NAVIGATION PAR ONGLETS
-           ========================================================================== */
-        .app-header {
-            background-color: var(--bg-surface);
-            border-bottom: 0.1rem solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            box-shadow: var(--shadow-sm);
+        button:active {
+            transform: scale(0.98);
         }
 
-        .header-inner {
-            max-width: 112rem;
+        button.secondary, .btn.secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background-color: var(--border);
+        }
+
+        main {
+            max-width: 800px;
             margin: 0 auto;
-            padding: 1.2rem 1.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.2rem;
+            padding: 2rem 1.5rem 8rem 1.5rem;
         }
 
-        .brand-logo {
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-        }
-
-        .brand-icon {
-            width: 4rem;
-            height: 4rem;
-            border-radius: var(--radius-md);
-            background: linear-gradient(135deg, var(--brand-primary), #0d9488);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .brand-title {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-        }
-
-        .brand-title span {
-            color: var(--brand-primary);
-        }
-
-        .brand-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        /* Barre d'onglets principaux */
-        .main-nav-wrapper {
-            background-color: var(--bg-surface);
-            border-bottom: 0.1rem solid var(--border-color);
-        }
-
-        .main-tablist {
-            max-width: 112rem;
-            margin: 0 auto;
-            padding: 0 1.6rem;
-            display: flex;
-            gap: 0.8rem;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-
-        .main-tablist::-webkit-scrollbar {
+        .tab-content {
             display: none;
         }
 
-        .tab-btn {
-            appearance: none;
-            background: transparent;
-            border: none;
-            border-bottom: 0.3rem solid transparent;
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 1.45rem;
-            font-weight: 700;
-            padding: 1.4rem 1.6rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.8rem;
-            white-space: nowrap;
-            transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
-        }
-
-        .tab-btn:hover {
-            color: var(--brand-primary);
-            background-color: var(--bg-surface-alt);
-        }
-
-        .tab-btn[aria-selected="true"] {
-            color: var(--brand-primary);
-            border-bottom-color: var(--brand-primary);
-        }
-
-        .tab-badge {
-            background-color: var(--brand-light);
-            color: var(--brand-text);
-            font-size: 1.15rem;
-            font-weight: 800;
-            padding: 0.2rem 0.7rem;
-            border-radius: var(--radius-full);
-        }
-
-        /* ==========================================================================
-           3. CONTENEUR PRINCIPAL, CARTES & BOUTONS
-           ========================================================================== */
-        .app-main {
-            flex: 1;
-            max-width: 112rem;
-            width: 100%;
-            margin: 0 auto;
-            padding: 2rem 1.6rem 4rem;
-        }
-
-        .tab-panel[hidden] {
-            display: none;
-        }
-
-        .grid-2-col {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            align-items: start;
-        }
-
-        @media (min-width: 880px) {
-            .grid-2-col {
-                grid-template-columns: 5fr 7fr;
-            }
+        .tab-content.active {
+            display: block;
         }
 
         .card {
-            background-color: var(--bg-surface);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-lg);
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2rem;
-            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
         }
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.2rem;
-            margin-bottom: 1.6rem;
-            flex-wrap: wrap;
-        }
-
-        .card-title {
-            font-size: 1.75rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            color: var(--text-primary);
-        }
-
-        /* Boutons génériques */
-        .btn {
-            appearance: none;
-            font-family: inherit;
-            font-size: 1.4rem;
-            font-weight: 700;
-            padding: 1rem 1.6rem;
-            border-radius: var(--radius-md);
-            border: 0.1rem solid transparent;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-            min-height: 4.2rem;
-            transition: all var(--transition-fast);
-            text-decoration: none;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background-color: var(--brand-primary);
-            color: #ffffff;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background-color: var(--brand-primary-hover);
-            transform: translateY(-0.1rem);
-        }
-
-        .btn-secondary {
-            background-color: var(--bg-surface-alt);
-            color: var(--text-primary);
-            border-color: var(--border-color);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            border-color: var(--border-strong);
-            background-color: var(--border-color);
-        }
-
-        .btn-danger {
-            background-color: var(--accent-red-light);
-            color: var(--accent-red);
-            border-color: transparent;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            background-color: var(--accent-red);
-            color: #ffffff;
-        }
-
-        .btn-sm {
-            font-size: 1.25rem;
-            padding: 0.6rem 1.1rem;
-            min-height: 3.4rem;
-            border-radius: var(--radius-sm);
-        }
-
-        .btn-icon {
-            padding: 0.8rem;
-            min-width: 4rem;
-            min-height: 4rem;
-        }
-
-        .btn-block {
-            width: 100%;
-        }
-
-        /* Formulaires */
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        .form-label {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-        }
-
-        .form-control {
-            font-family: inherit;
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            background-color: var(--bg-surface-alt);
-            border: 0.15rem solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1rem 1.3rem;
-            min-height: 4.4rem;
-            width: 100%;
-            transition: border-color var(--transition-fast), background-color var(--transition-fast);
-        }
-
-        .form-control:focus {
-            border-color: var(--brand-primary);
-            background-color: var(--bg-surface);
-        }
-
-        .input-row {
-            display: flex;
-            gap: 0.8rem;
-        }
-
-        .grid-form-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.2rem;
-        }
-
-        @media (min-width: 540px) {
-            .grid-form-3 {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1.2rem;
-            }
-        }
-
-        /* ==========================================================================
-           4. MODULE SCANNER DE CODES-BARRES (Caméra + Laser + Photo)
-           ========================================================================== */
-        .scanner-viewport {
-            position: relative;
-            width: 100%;
-            min-height: 24rem;
-            background-color: #090e0c;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 0.15rem solid var(--border-color);
-        }
-
-        .scanner-video {
-            width: 100%;
-            height: 28rem;
-            object-fit: cover;
-            display: block;
-        }
-
-        .scanner-video[hidden] {
-            display: none;
-        }
-
-        .scanner-idle-box {
-            padding: 2.4rem 1.6rem;
-            text-align: center;
-            color: #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.2rem;
-        }
-
-        .scanner-idle-box[hidden] {
-            display: none;
-        }
-
-        .scanner-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .scanner-overlay[hidden] {
-            display: none;
-        }
-
-        .scanner-reticle {
-            width: 78%;
-            max-width: 30rem;
-            height: 13rem;
-            border: 0.25rem solid rgba(34, 197, 94, 0.85);
-            border-radius: var(--radius-md);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.48);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .scanner-laser {
-            position: absolute;
+        /* Navigation par onglets inférieure */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
             left: 0;
-            right: 0;
-            height: 0.25rem;
-            background: #ef4444;
-            box-shadow: 0 0 0.8rem #ef4444;
-            animation: scanLaser 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes scanLaser {
-            0% { top: 10%; }
-            100% { top: 90%; }
-        }
-
-        .scanner-engine-badge {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(9, 14, 12, 0.78);
-            color: #86efac;
-            font-size: 1.15rem;
-            font-weight: 700;
-            padding: 0.4rem 0.9rem;
-            border-radius: var(--radius-full);
-            backdrop-filter: blur(4px);
-        }
-
-        .scanner-controls {
+            width: 100%;
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border);
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            margin-top: 1.2rem;
+            justify-content: space-around;
+            padding: 1rem 0;
+            z-index: 100;
         }
 
-        .divider-text {
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-            margin: 1.8rem 0;
+        .nav-item {
+            background: none;
+            border: none;
             color: var(--text-muted);
             font-size: 1.2rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .divider-text::before, .divider-text::after {
-            content: "";
-            flex: 1;
-            height: 0.1rem;
-            background-color: var(--border-color);
-        }
-
-        .sample-chips {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 1rem;
-        }
-
-        .chip-btn {
-            appearance: none;
-            background-color: var(--bg-surface-alt);
-            border: 0.1rem solid var(--border-color);
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 1.25rem;
-            font-weight: 600;
-            padding: 0.6rem 1rem;
-            border-radius: var(--radius-full);
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
             cursor: pointer;
-            transition: all var(--transition-fast);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
         }
 
-        .chip-btn:hover {
-            border-color: var(--brand-primary);
-            color: var(--brand-primary);
-            background-color: var(--brand-light);
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: 600;
         }
 
-        /* ==========================================================================
-           5. FICHE PRODUIT SCANNÉ & CALCULATEUR LIBRE
-           ========================================================================== */
-        .sub-tabs {
+        .nav-item svg {
+            width: 2.2rem;
+            height: 2.2rem;
+            fill: currentColor;
+        }
+
+        /* Dashboard */
+        .dashboard-header {
             display: flex;
-            background-color: var(--bg-surface-alt);
-            padding: 0.4rem;
-            border-radius: var(--radius-md);
-            margin-bottom: 1.8rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 600;
+        }
+
+        .points-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--primary-light);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.4rem;
+            color: var(--text-muted);
+        }
+
+        .metric-card .value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Barres de progression macros */
+        .macro-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .macro-item {
+            display: flex;
+            flex-direction: column;
             gap: 0.4rem;
         }
 
-        .sub-tab-btn {
-            flex: 1;
-            appearance: none;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 1.35rem;
-            font-weight: 700;
-            padding: 0.9rem 1.2rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .sub-tab-btn[aria-selected="true"] {
-            background-color: var(--bg-surface);
-            color: var(--brand-primary);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .product-hero {
-            display: flex;
-            gap: 1.6rem;
-            align-items: center;
-            padding-bottom: 1.8rem;
-            border-bottom: 0.1rem solid var(--border-color);
-            flex-wrap: wrap;
-        }
-
-        .product-thumb {
-            width: 8.4rem;
-            height: 8.4rem;
-            object-fit: contain;
-            background-color: #ffffff;
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 0.6rem;
-            flex-shrink: 0;
-        }
-
-        .product-meta {
-            flex: 1;
-            min-width: 18rem;
-        }
-
-        .badge-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.6rem;
-        }
-
-        .badge {
-            font-size: 1.15rem;
-            font-weight: 800;
-            padding: 0.3rem 0.8rem;
-            border-radius: var(--radius-sm);
-            text-transform: uppercase;
-        }
-
-        .badge-brand {
-            background-color: var(--brand-light);
-            color: var(--brand-text);
-        }
-
-        .points-pill {
-            background: linear-gradient(135deg, var(--brand-primary), #0d9488);
-            color: #ffffff;
-            padding: 1.2rem 1.8rem;
-            border-radius: var(--radius-md);
-            text-align: center;
-            min-width: 10.5rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .points-pill-value {
-            font-size: 3.2rem;
-            font-weight: 900;
-            line-height: 1;
-            display: block;
-        }
-
-        .points-pill-label {
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            opacity: 0.9;
-        }
-
-        .portion-box {
-            padding: 1.8rem 0;
-            border-bottom: 0.1rem solid var(--border-color);
-        }
-
-        .portion-header {
+        .macro-label {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            gap: 1rem;
-        }
-
-        .portion-slider {
-            width: 100%;
-            height: 0.8rem;
-            border-radius: var(--radius-full);
-            background: var(--border-color);
-            accent-color: var(--brand-primary);
-            cursor: pointer;
-            margin: 0.8rem 0 1.2rem;
-        }
-
-        .nutri-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin: 1.6rem 0 2rem;
-        }
-
-        @media (min-width: 540px) {
-            .nutri-grid {
-                grid-template-columns: repeat(6, 1fr);
-            }
-        }
-
-        .nutri-cell {
-            background-color: var(--bg-surface-alt);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1rem 0.6rem;
-            text-align: center;
-        }
-
-        .nutri-cell-label {
-            display: block;
-            font-size: 1.15rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .nutri-cell-val {
-            display: block;
-            font-size: 1.45rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-top: 0.2rem;
-        }
-
-        /* ==========================================================================
-           6. SUIVI JOURNALIER (Jauge SVG, Macros & Liste des repas)
-           ========================================================================== */
-        .date-navigator {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            background-color: var(--bg-surface);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.2rem 1.6rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .date-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .dashboard-summary {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (min-width: 768px) {
-            .dashboard-summary {
-                grid-template-columns: 32rem 1fr;
-            }
-        }
-
-        .gauge-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .gauge-wrapper {
-            position: relative;
-            width: 19rem;
-            height: 19rem;
-            margin: 0.8rem 0 1.4rem;
-        }
-
-        .gauge-svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-
-        .gauge-bg {
-            fill: none;
-            stroke: var(--bg-surface-alt);
-            stroke-width: 1.5;
-        }
-
-        .gauge-progress {
-            fill: none;
-            stroke: var(--brand-primary);
-            stroke-width: 1.5;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 450ms ease, stroke 300ms ease;
-        }
-
-        .gauge-center {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .gauge-value {
-            font-size: 3.8rem;
-            font-weight: 900;
-            line-height: 1;
-        }
-
-        .gauge-sub {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-top: 0.4rem;
-        }
-
-        /* Barres de progression Calories & Macros */
-        .macros-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1.4rem;
-            justify-content: center;
-        }
-
-        .macro-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 0.5rem;
             font-size: 1.4rem;
+            color: var(--text-muted);
         }
 
-        .macro-name {
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .macro-dot {
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .macro-numbers {
-            font-weight: 700;
-            color: var(--text-secondary);
-            font-size: 1.35rem;
-        }
-
-        .progress-track {
+        .progress-bar {
             width: 100%;
-            height: 1.1rem;
-            background-color: var(--bg-surface-alt);
-            border-radius: var(--radius-full);
+            height: 1rem;
+            background-color: var(--border);
+            border-radius: 0.5rem;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            border-radius: var(--radius-full);
-            transition: width 400ms ease;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
         }
 
-        /* Liste des aliments du jour */
-        .journal-entries {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        /* Formulaires & Inputs */
+        .form-group {
+            margin-bottom: 1.5rem;
         }
 
-        .entry-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.2rem;
-            padding: 1.4rem 1.6rem;
-            background-color: var(--bg-surface-alt);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-md);
-            transition: border-color var(--transition-fast);
-        }
-
-        .entry-card:hover {
-            border-color: var(--border-strong);
-        }
-
-        .entry-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .entry-title {
-            font-size: 1.55rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .entry-meta {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            margin-top: 0.3rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-        }
-
-        .entry-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-shrink: 0;
-        }
-
-        .entry-points-badge {
-            background-color: var(--brand-light);
-            color: var(--brand-text);
-            font-size: 1.4rem;
-            font-weight: 800;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-        }
-
-        /* ==========================================================================
-           7. BILAN MENSUEL, HEATMAP & GRAPHIQUE SVG
-           ========================================================================== */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.2rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (min-width: 768px) {
-            .kpi-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .kpi-card {
-            background-color: var(--bg-surface);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.6rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .kpi-label {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .kpi-value {
-            font-size: 2.6rem;
-            font-weight: 900;
-            color: var(--text-primary);
-            margin: 0.4rem 0 0.2rem;
-            line-height: 1.1;
-        }
-
-        .kpi-sub {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-        }
-
-        /* Calendrier Heatmap Mensuel */
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.6rem;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--text-muted);
-            margin-bottom: 0.8rem;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.6rem;
-        }
-
-        .cal-day {
-            aspect-ratio: 1 / 1;
-            min-height: 4.8rem;
-            border-radius: var(--radius-md);
-            border: 0.15rem solid var(--border-color);
-            background-color: var(--bg-surface-alt);
-            color: var(--text-primary);
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.4rem;
-            transition: transform var(--transition-fast), border-color var(--transition-fast);
-        }
-
-        .cal-day:hover:not(.cal-empty) {
-            transform: scale(1.04);
-            border-color: var(--brand-primary);
-        }
-
-        .cal-empty {
-            background: transparent;
-            border-color: transparent;
-            cursor: default;
-        }
-
-        .cal-day-num {
-            font-size: 1.35rem;
-            font-weight: 800;
-        }
-
-        .cal-day-pts {
-            font-size: 1.05rem;
-            font-weight: 700;
-            margin-top: 0.2rem;
-        }
-
-        .cal-status-ok {
-            background-color: var(--brand-light);
-            border-color: var(--brand-primary);
-            color: var(--brand-text);
-        }
-
-        .cal-status-warn {
-            background-color: var(--accent-amber-light);
-            border-color: var(--accent-amber);
-            color: var(--accent-amber);
-        }
-
-        .cal-status-over {
-            background-color: var(--accent-red-light);
-            border-color: var(--accent-red);
-            color: var(--accent-red);
-        }
-
-        .cal-today {
-            box-shadow: inset 0 0 0 0.2rem var(--text-primary);
-        }
-
-        .legend-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.4rem;
-            margin-top: 1.4rem;
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .legend-swatch {
-            width: 1.4rem;
-            height: 1.4rem;
-            border-radius: 0.4rem;
-            border: 0.1rem solid var(--border-strong);
-        }
-
-        /* Graphique SVG mensuel */
-        .chart-scroll-container {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 0.8rem;
-        }
-
-        .monthly-svg-chart {
-            width: 100%;
-            min-width: 56rem;
-            height: 23rem;
+        label {
             display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.4rem;
         }
 
-        /* ==========================================================================
-           8. MODALES & NOTIFICATIONS TOAST
-           ========================================================================== */
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(9, 14, 12, 0.65);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.6rem;
+        input, select {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-size: 1.6rem;
         }
 
-        .modal-backdrop[hidden] {
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+        }
+
+        /* Scanner */
+        #scanner-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 1.5rem auto;
+            position: relative;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
             display: none;
         }
 
-        .modal-dialog {
-            background-color: var(--bg-surface);
-            border: 0.1rem solid var(--border-color);
-            border-radius: var(--radius-lg);
-            max-width: 48rem;
+        #interactive.viewport {
             width: 100%;
-            padding: 2.4rem;
-            box-shadow: var(--shadow-lg);
-            max-height: 90vh;
-            overflow-y: auto;
+            height: 300px;
         }
 
-        .toast-stack {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 200;
+        #interactive.viewport > video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Listes */
+        .food-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .food-item {
             display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-width: 36rem;
-            width: calc(100% - 3.2rem);
-            pointer-events: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
         }
 
-        .toast-msg {
-            background-color: var(--bg-elevated);
-            color: var(--text-primary);
-            border: 0.1rem solid var(--border-color);
-            border-left: 0.5rem solid var(--brand-primary);
-            padding: 1.3rem 1.6rem;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            font-size: 1.4rem;
-            font-weight: 600;
-            pointer-events: auto;
-            animation: slideToast 240ms ease-out;
+        .food-item:last-child {
+            border-bottom: none;
         }
 
-        .toast-error {
-            border-left-color: var(--accent-red);
+        .food-info h4 {
+            margin: 0 0 0.3rem 0;
+            font-size: 1.6rem;
         }
 
-        .toast-warn {
-            border-left-color: var(--accent-amber);
-        }
-
-        @keyframes slideToast {
-            from { opacity: 0; transform: translateY(1.2rem); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .empty-placeholder {
-            text-align: center;
-            padding: 3.2rem 1.6rem;
-            border: 0.2rem dashed var(--border-color);
-            border-radius: var(--radius-md);
-            color: var(--text-muted);
-        }
-
-        .app-footer {
-            background-color: var(--bg-surface);
-            border-top: 0.1rem solid var(--border-color);
-            padding: 2rem 1.6rem;
-            text-align: center;
+        .food-info p {
+            margin: 0;
             font-size: 1.3rem;
             color: var(--text-muted);
         }
 
-        .app-footer a {
-            color: var(--brand-primary);
+        .food-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .badge {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
             font-weight: 700;
-            text-decoration: none;
+            font-size: 1.4rem;
+        }
+
+        /* Calendrier Heatmap & Graphiques */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .heatmap-day {
+            aspect-ratio: 1;
+            background: var(--border);
+            border-radius: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .heatmap-day.active-day {
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow);
+        }
+
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .row .form-group {
+            flex: 1;
         }
     </style>
 </head>
-<body>
-    <a href="#main-content" class="skip-link">Aller directement au contenu principal</a>
+<body data-theme="dark" data-accent="green">
 
-    <!-- Zone de notifications accessibles -->
-    <div id="toast-container" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- ======================================================================
-         EN-TÊTE & NAVIGATION
-         ====================================================================== -->
-    <header class="app-header">
-        <div class="header-inner">
-            <div class="brand-logo">
-                <div class="brand-icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="brand-title">Nutri<span>Points</span></h1>
-                    <p class="brand-subtitle">Scanner & Suivi Nutritionnel</p>
-                </div>
-            </div>
-
-            <div class="header-actions">
-                <button type="button" id="btn-open-goals" class="btn btn-secondary btn-sm" aria-label="Modifier le capital points et les objectifs nutritionnels">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Objectifs (<strong id="header-capital-badge">30</strong> pts)</span>
-                </button>
-                <button type="button" id="btn-toggle-theme" class="btn btn-secondary btn-icon" aria-label="Basculer le thème clair ou sombre" title="Changer de thème">
-                    <span id="theme-icon" aria-hidden="true">🌙</span>
-                </button>
-            </div>
+    <header>
+        <h1 id="app-title">NutriPoints</h1>
+        <div class="header-controls">
+            <button class="secondary" id="btn-theme" title="Changer de thème clair/sombre">🌓</button>
         </div>
-
-        <nav class="main-nav-wrapper" aria-label="Navigation principale">
-            <div class="main-tablist" role="tablist">
-                <button type="button" role="tab" id="tab-scanner" aria-controls="panel-scanner" aria-selected="true" class="tab-btn">
-                    📷 Scanner & Ajout
-                </button>
-                <button type="button" role="tab" id="tab-daily" aria-controls="panel-daily" aria-selected="false" class="tab-btn">
-                    📅 Suivi Journalier <span id="nav-today-pts" class="tab-badge">0 / 30 pts</span>
-                </button>
-                <button type="button" role="tab" id="tab-monthly" aria-controls="panel-monthly" aria-selected="false" class="tab-btn">
-                    📊 Bilan Mensuel & Stats
-                </button>
-            </div>
-        </nav>
     </header>
 
-    <!-- ======================================================================
-         CONTENU PRINCIPAL
-         ====================================================================== -->
-    <main id="main-content" class="app-main">
-
-        <!-- ==================================================================
-             ONGLET 1 : SCANNER DE CODES-BARRES & AJOUT D'ALIMENTS
-             ================================================================== -->
-        <section id="panel-scanner" role="tabpanel" aria-labelledby="tab-scanner" class="tab-panel">
-            <div class="grid-2-col">
-                <!-- Colonne Gauche : Lecteur Caméra + Photo + Saisie Code-barres -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Lecteur de Codes-Barres</h2>
-                        <button type="button" id="btn-open-formula" class="btn btn-secondary btn-sm">ℹ️ Formule</button>
-                    </div>
-
-                    <!-- Zone Vidéo Caméra -->
-                    <div class="scanner-viewport" id="scanner-viewport">
-                        <div id="scanner-idle" class="scanner-idle-box">
-                            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" aria-hidden="true">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-                            </svg>
-                            <p style="font-size: 1.4rem; max-width: 28rem;">Activez la caméra pour lire instantanément un code-barres EAN/UPC.</p>
-                            <button type="button" id="btn-start-camera" class="btn btn-primary">
-                                Démarrer la caméra
-                            </button>
-                        </div>
-
-                        <video id="scanner-video" class="scanner-video" playsinline muted autoplay hidden></video>
-
-                        <div id="scanner-overlay" class="scanner-overlay" hidden>
-                            <span id="scanner-engine-label" class="scanner-engine-badge">Moteur : Détection auto</span>
-                            <div class="scanner-reticle" aria-hidden="true">
-                                <div class="scanner-laser"></div>
-                            </div>
+    <main>
+        <!-- ONGLET 1 : DASHBOARD & SUIVI QUOTIDIEN -->
+        <section id="tab-dashboard" class="tab-content active">
+            <div class="card">
+                <div class="dashboard-header">
+                    <div>
+                        <h2 id="welcome-msg" style="margin:0 0 0.5rem 0; font-size:2rem;">Bonjour !</h2>
+                        <div class="date-selector">
+                            <button class="secondary" id="prev-day" style="padding:0.4rem 0.8rem;">◀</button>
+                            <span id="current-date-label">Aujourd'hui</span>
+                            <button class="secondary" id="next-day" style="padding:0.4rem 0.8rem;">▶</button>
                         </div>
                     </div>
+                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem;">⚙️ Objectif / Capital</button>
+                </div>
 
-                    <!-- Contrôles actifs de la caméra -->
-                    <div id="camera-active-controls" class="scanner-controls" hidden>
-                        <button type="button" id="btn-stop-camera" class="btn btn-danger btn-sm">Arrêter</button>
-                        <button type="button" id="btn-switch-camera" class="btn btn-secondary btn-sm" hidden>🔄 Changer caméra</button>
-                        <select id="camera-select" class="form-control" style="min-height: 3.4rem; padding: 0.4rem 0.8rem; font-size: 1.3rem; flex: 1;" aria-label="Sélectionner une caméra" hidden></select>
+                <div class="points-summary-grid">
+                    <div class="metric-card">
+                        <h3>Points Restants</h3>
+                        <div class="value" id="remaining-points-val">30</div>
+                        <span style="font-size:1.3rem; color:var(--text-muted);" id="budget-info">sur 30 pts</span>
                     </div>
-
-                    <!-- Solution de secours infaillible : Scan depuis une photo -->
-                    <div style="margin-top: 1.2rem;">
-                        <input type="file" id="barcode-image-input" accept="image/*" capture="environment" class="sr-only">
-                        <button type="button" id="btn-scan-photo" class="btn btn-secondary btn-block">
-                            📸 Scanner depuis une photo / image
-                        </button>
-                    </div>
-
-                    <div class="divider-text">Ou recherche par code</div>
-
-                    <!-- Saisie manuelle du code-barres -->
-                    <form id="manual-barcode-form" class="form-group">
-                        <label for="barcode-text-input" class="form-label">Numéro du code-barres (EAN-13, EAN-8, UPC)</label>
-                        <div class="input-row">
-                            <input type="text" id="barcode-text-input" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ex: 3017620422003" required>
-                            <button type="submit" class="btn btn-primary">Chercher</button>
-                        </div>
-                    </form>
-
-                    <!-- Exemples cliquables pour tester immédiatement -->
-                    <div style="margin-top: 1.4rem;">
-                        <span class="form-label" style="display: block; margin-bottom: 0.4rem;">Tester avec un produit exemple :</span>
-                        <div class="sample-chips">
-                            <button type="button" class="chip-btn" data-sample-barcode="3017620422003">🍫 Nutella</button>
-                            <button type="button" class="chip-btn" data-sample-barcode="5449000000996">🥤 Coca-Cola</button>
-                            <button type="button" class="chip-btn" data-sample-barcode="3228857000166">🍞 Pain de mie</button>
-                            <button type="button" class="chip-btn" data-sample-barcode="3033491276606">🥣 Yaourt Grec</button>
-                        </div>
+                    <div class="metric-card" style="background:var(--border);">
+                        <h3>Calories du jour</h3>
+                        <div class="value" id="total-calories-val" style="color:var(--text-main);">0 kcal</div>
+                        <span style="font-size:1.3rem; color:var(--text-muted);" id="target-calories-info">Objectif: 2000 kcal</span>
                     </div>
                 </div>
 
-                <!-- Colonne Droite : Fiche Produit Scanné OU Calculateur Nutritionnel Libre -->
-                <div class="card">
-                    <div class="sub-tabs" role="tablist" aria-label="Mode de calcul">
-                        <button type="button" role="tab" id="subtab-product" aria-controls="subpanel-product" aria-selected="true" class="sub-tab-btn">
-                            📦 Produit Scanné
-                        </button>
-                        <button type="button" role="tab" id="subtab-custom" aria-controls="subpanel-custom" aria-selected="false" class="sub-tab-btn">
-                            🧮 Calculateur Libre
-                        </button>
+                <div class="macro-bars">
+                    <div class="macro-item">
+                        <div class="macro-label"><span>Protéines</span><span id="macro-p-val">0g</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#3b82f6;"></div></div>
                     </div>
-
-                    <!-- Sous-panneau 1 : Résultat du scan Open Food Facts -->
-                    <div id="subpanel-product" role="tabpanel" aria-labelledby="subtab-product">
-                        <div id="product-loading" class="empty-placeholder" hidden>
-                            <p style="font-weight: 700; color: var(--brand-primary);">Recherche en cours sur Open Food Facts...</p>
-                            <p style="font-size: 1.3rem; margin-top: 0.4rem;">Extraction des valeurs nutritionnelles</p>
-                        </div>
-
-                        <div id="product-empty" class="empty-placeholder">
-                            <p style="font-weight: 700; font-size: 1.5rem; color: var(--text-secondary);">Aucun produit sélectionné</p>
-                            <p style="font-size: 1.35rem; margin-top: 0.6rem;">Scannez un code-barres avec la caméra, importez une photo ou cliquez sur un produit exemple à gauche.</p>
-                        </div>
-
-                        <div id="product-result" hidden>
-                            <div class="product-hero">
-                                <img id="prod-img" class="product-thumb" src="https://placehold.co/120x120/eef3f0/475850?text=Produit" alt="Visuel du produit">
-                                <div class="product-meta">
-                                    <div class="badge-row">
-                                        <span id="prod-brand" class="badge badge-brand">Marque</span>
-                                        <span id="prod-nutriscore" class="badge" style="background: var(--bg-surface-alt);">Nutri-Score ?</span>
-                                    </div>
-                                    <h3 id="prod-name" style="font-size: 1.9rem; font-weight: 800; line-height: 1.2;">Nom du produit</h3>
-                                    <p id="prod-code" style="font-size: 1.25rem; color: var(--text-muted); margin-top: 0.3rem;">Code : 0000000000000</p>
-                                </div>
-                                <div class="points-pill" aria-live="polite">
-                                    <span id="prod-points-display" class="points-pill-value">0</span>
-                                    <span class="points-pill-label">Points</span>
-                                </div>
-                            </div>
-
-                            <!-- Réglage de la portion -->
-                            <div class="portion-box">
-                                <div class="portion-header">
-                                    <label for="portion-number-input" class="form-label">Quantité consommée :</label>
-                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                                        <input type="number" id="portion-number-input" class="form-control" style="width: 9rem; min-height: 3.8rem; text-align: right; font-weight: 800;" min="1" max="2000" value="100">
-                                        <span style="font-weight: 700; color: var(--text-secondary);">g / ml</span>
-                                    </div>
-                                </div>
-                                <input type="range" id="portion-range-input" class="portion-slider" min="5" max="500" step="5" value="100" aria-label="Ajuster la portion en grammes">
-                                <div class="sample-chips">
-                                    <button type="button" class="chip-btn" data-portion="15">15g (1 c.à.s)</button>
-                                    <button type="button" class="chip-btn" data-portion="30">30g (Portion)</button>
-                                    <button type="button" class="chip-btn" data-portion="100">100g (Base)</button>
-                                    <button type="button" class="chip-btn" data-portion="125">125g (1 pot)</button>
-                                    <button type="button" class="chip-btn" data-portion="250">250ml (1 verre)</button>
-                                </div>
-                            </div>
-
-                            <!-- Tableau des nutriments pour la portion -->
-                            <div class="nutri-grid">
-                                <div class="nutri-cell"><span class="nutri-cell-label">Calories</span><span id="val-kcal" class="nutri-cell-val">0 kcal</span></div>
-                                <div class="nutri-cell"><span class="nutri-cell-label">Protéines</span><span id="val-prot" class="nutri-cell-val" style="color: var(--brand-primary);">0 g</span></div>
-                                <div class="nutri-cell"><span class="nutri-cell-label">Glucides</span><span id="val-carb" class="nutri-cell-val">0 g</span></div>
-                                <div class="nutri-cell"><span class="nutri-cell-label">Sucres</span><span id="val-sugar" class="nutri-cell-val" style="color: var(--accent-amber);">0 g</span></div>
-                                <div class="nutri-cell"><span class="nutri-cell-label">Lipides</span><span id="val-fat" class="nutri-cell-val">0 g</span></div>
-                                <div class="nutri-cell"><span class="nutri-cell-label">Saturés</span><span id="val-satfat" class="nutri-cell-val" style="color: var(--accent-red);">0 g</span></div>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: 1.4rem;">
-                                <label for="target-log-date" class="form-label">Enregistrer à la date du :</label>
-                                <input type="date" id="target-log-date" class="form-control">
-                            </div>
-
-                            <button type="button" id="btn-add-scanned-food" class="btn btn-primary btn-block">
-                                ➕ Ajouter au suivi nutritionnel
-                            </button>
-                        </div>
+                    <div class="macro-item">
+                        <div class="macro-label"><span>Glucides</span><span id="macro-g-val">0g</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="bar-g" style="background:#f59e0b;"></div></div>
                     </div>
-
-                    <!-- Sous-panneau 2 : Calculateur Nutritionnel Libre (sans code-barres) -->
-                    <div id="subpanel-custom" role="tabpanel" aria-labelledby="subtab-custom" hidden>
-                        <form id="custom-food-form" style="display: flex; flex-direction: column; gap: 1.4rem;">
-                            <div class="grid-form-2">
-                                <div class="form-group">
-                                    <label for="custom-name" class="form-label">Nom de l'aliment / repas *</label>
-                                    <input type="text" id="custom-name" class="form-control" placeholder="Ex: Escalope de poulet & riz" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-weight" class="form-label">Poids / Portion (g)</label>
-                                    <input type="number" id="custom-weight" class="form-control" min="1" max="5000" value="150" required>
-                                </div>
-                            </div>
-
-                            <p style="font-size: 1.25rem; color: var(--text-muted);">Saisissez les valeurs nutritionnelles pour la portion indiquée ci-dessus :</p>
-
-                            <div class="grid-form-3 grid-form-2">
-                                <div class="form-group">
-                                    <label for="custom-kcal" class="form-label">Calories (kcal) *</label>
-                                    <input type="number" id="custom-kcal" class="form-control" min="0" step="0.1" value="250" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-prot" class="form-label">Protéines (g)</label>
-                                    <input type="number" id="custom-prot" class="form-control" min="0" step="0.1" value="25">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-carb" class="form-label">Glucides totaux (g)</label>
-                                    <input type="number" id="custom-carb" class="form-control" min="0" step="0.1" value="20">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-sugar" class="form-label">Dont sucres (g)</label>
-                                    <input type="number" id="custom-sugar" class="form-control" min="0" step="0.1" value="2">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-fat" class="form-label">Lipides totaux (g)</label>
-                                    <input type="number" id="custom-fat" class="form-control" min="0" step="0.1" value="6">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-satfat" class="form-label">Gr. saturées (g)</label>
-                                    <input type="number" id="custom-satfat" class="form-control" min="0" step="0.1" value="1.5">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-fiber" class="form-label">Fibres (g)</label>
-                                    <input type="number" id="custom-fiber" class="form-control" min="0" step="0.1" value="3">
-                                </div>
-                                <div class="form-group">
-                                    <label for="custom-date" class="form-label">Date d'ajout</label>
-                                    <input type="date" id="custom-date" class="form-control">
-                                </div>
-                            </div>
-
-                            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-alt); padding: 1.4rem 1.8rem; border-radius: var(--radius-md); border: 0.1rem solid var(--border-color);">
-                                <div>
-                                    <span style="font-size: 1.3rem; font-weight: 700; color: var(--text-secondary); display: block;">Score estimé :</span>
-                                    <span style="font-size: 1.2rem; color: var(--text-muted);">Calcul automatique en temps réel</span>
-                                </div>
-                                <div style="font-size: 2.6rem; font-weight: 900; color: var(--brand-primary);">
-                                    <span id="custom-preview-points">5</span> <span style="font-size: 1.4rem;">pts</span>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary btn-block">
-                                ➕ Enregistrer cet aliment libre
-                            </button>
-                        </form>
+                    <div class="macro-item">
+                        <div class="macro-label"><span>Lipides</span><span id="macro-l-val">0g</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="bar-l" style="background:#ef4444;"></div></div>
                     </div>
+                    <div class="macro-item">
+                        <div class="macro-label"><span>Fibres</span><span id="macro-f-val">0g</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#10b981;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0;">Aliments consommés</h3>
+                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter un aliment</button>
+                </div>
+                <ul class="food-list" id="daily-food-list">
+                    <li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ONGLET 2 : SCANNER & RECHERCHE / CALCULATEUR -->
+        <section id="tab-scanner" class="tab-content">
+            <div class="card">
+                <h2 style="margin-top:0;">Scanner ou Rechercher un aliment</h2>
+                
+                <div id="scanner-container">
+                    <div id="interactive" class="viewport">
+                        <video id="scanner-video" playsinline muted autoplay style="width:100%; height:100%; object-fit:cover;"></video>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                    <button id="btn-start-scanner">📷 Démarrer la caméra</button>
+                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter la caméra</button>
+                    <label class="btn secondary" style="cursor:pointer; margin:0;">
+                        📁 Importer une photo code-barres
+                        <input type="file" id="barcode-file-input" accept="image/*" style="display:none;">
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual-barcode">Ou saisir le code-barres (EAN/UPC)</label>
+                    <div style="display:flex; gap:1rem;">
+                        <input type="text" id="manual-barcode" placeholder="Ex: 3017620422003">
+                        <button id="btn-search-barcode">Rechercher</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Calculateur & Saisie manuelle libre</h3>
+                <div class="form-group">
+                    <label for="manual-name">Nom du produit / plat</label>
+                    <input type="text" id="manual-name" placeholder="Ex: Yaourt nature, Poulet grillé...">
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="manual-calories">Calories (kcal / 100g)</label>
+                        <input type="number" id="manual-calories" value="150">
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-proteins">Protéines (g)</label>
+                        <input type="number" id="manual-proteins" value="10">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="manual-carbs">Glucides (g)</label>
+                        <input type="number" id="manual-carbs" value="15">
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-fats">Lipides (g)</label>
+                        <input type="number" id="manual-fats" value="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="manual-fibers">Fibres (g)</label>
+                    <input type="number" id="manual-fibers" value="2">
+                </div>
+                <div class="form-group">
+                    <label for="manual-serving">Quantité consommée (g ou ml)</label>
+                    <input type="number" id="manual-serving" value="100">
+                </div>
+
+                <div style="background:var(--primary-light); padding:1.2rem; border-radius:var(--radius); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600;">Points calculés pour cette portion :</span>
+                    <span id="preview-calculated-points" style="font-size:2rem; font-weight:700; color:var(--primary);">4 pts</span>
+                </div>
+
+                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal du jour</button>
+            </div>
+        </section>
+
+        <!-- ONGLET 3 : PROFIL & OBJECTIFS (CALCULATEUR & POIDS) -->
+        <section id="tab-profile" class="tab-content">
+            <div class="card">
+                <h2 style="margin-top:0;">Personnalisation & Apparence</h2>
+                <div class="form-group">
+                    <label for="input-firstname">Votre Prénom</label>
+                    <input type="text" id="input-firstname" placeholder="Ex: Thomas, Julie...">
+                </div>
+                <div class="form-group">
+                    <label for="select-accent">Thème de couleur</label>
+                    <select id="select-accent">
+                        <option value="green">Vert (Par défaut)</option>
+                        <option value="pink">Rose</option>
+                        <option value="blue">Bleu</option>
+                    </select>
+                </div>
+                <button id="btn-save-appearance">Enregistrer les préférences</button>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-top:0;">Calculateur de Profil & Objectifs</h2>
+                <p style="color:var(--text-muted); font-size:1.4rem;">Calculez automatiquement votre capital de points et vos besoins caloriques selon vos caractéristiques physiques (formule Mifflin-St Jeor).</p>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label for="profile-gender">Genre</label>
+                        <select id="profile-gender">
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-age">Âge (ans)</label>
+                        <input type="number" id="profile-age" value="45">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="profile-height">Taille (cm)</label>
+                        <input type="number" id="profile-height" value="175">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-weight">Poids actuel (kg)</label>
+                        <input type="number" id="profile-weight" value="80">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="profile-target-weight">Poids idéal recherché (Cible en kg)</label>
+                    <input type="number" id="profile-target-weight" value="70">
+                </div>
+
+                <div class="form-group">
+                    <label for="profile-activity">Niveau d'activité physique</label>
+                    <select id="profile-activity">
+                        <option value="1.2">Sédentaire (peu ou pas d'exercice)</option>
+                        <option value="1.375">Légèrement actif (exercice léger 1-3j/sem)</option>
+                        <option value="1.55" selected>Modérément actif (exercice modéré 3-5j/sem)</option>
+                        <option value="1.725">Très actif (exercice intense 6-7j/sem)</option>
+                    </select>
+                </div>
+
+                <button id="btn-calculate-profile" style="width:100%;">Calculer mes recommandations & Objectif</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Suivi de l'évolution du poids</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; font-size:1.5rem;">
+                    <div>Poids de départ : <strong id="stat-start-weight">80 kg</strong></div>
+                    <div>Cible : <strong id="stat-target-weight">70 kg</strong></div>
+                    <div>Perte : <strong id="stat-diff-weight" style="color:var(--primary);">0 kg</strong></div>
+                </div>
+                <div class="form-group">
+                    <label for="new-weight-log">Enregistrer une pesée aujourd'hui (kg)</label>
+                    <div style="display:flex; gap:1rem;">
+                        <input type="number" step="0.1" id="new-weight-log" placeholder="Ex: 79.2">
+                        <button id="btn-log-weight">Ajouter</button>
+                    </div>
+                </div>
+                <div id="weight-history-container" style="margin-top:1.5rem;">
+                    <!-- Historique des pesées -->
                 </div>
             </div>
         </section>
 
-        <!-- ==================================================================
-             ONGLET 2 : SUIVI JOURNALIER (Points, Calories, Macros & Aliments)
-             ================================================================== -->
-        <section id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" class="tab-panel" hidden>
-            <!-- Navigateur de date -->
-            <div class="date-navigator">
-                <div class="date-controls">
-                    <button type="button" id="btn-prev-day" class="btn btn-secondary btn-icon" aria-label="Jour précédent">◀</button>
-                    <input type="date" id="daily-date-picker" class="form-control" style="width: auto; font-weight: 700;" aria-label="Choisir une date">
-                    <button type="button" id="btn-next-day" class="btn btn-secondary btn-icon" aria-label="Jour suivant">▶</button>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span id="daily-human-date" style="font-weight: 800; font-size: 1.5rem; text-transform: capitalize;">Aujourd'hui</span>
-                    <button type="button" id="btn-today-jump" class="btn btn-secondary btn-sm">Aujourd'hui</button>
-                </div>
-            </div>
-
-            <!-- Tableau de bord : Jauge Points + Barres Calories & Macros -->
-            <div class="dashboard-summary">
-                <!-- Carte Jauge Points -->
-                <div class="card gauge-card">
-                    <div class="card-header" style="width: 100%; margin-bottom: 0.4rem;">
-                        <h2 class="card-title">Capital Points</h2>
-                        <button type="button" id="btn-inline-edit-capital" class="btn btn-secondary btn-sm">✏️ Modifier</button>
-                    </div>
-
-                    <div class="gauge-wrapper">
-                        <svg class="gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
-                            <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
-                            <circle id="daily-gauge-circle" class="gauge-progress" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"></circle>
-                        </svg>
-                        <div class="gauge-center" aria-live="polite">
-                            <span id="daily-pts-consumed" class="gauge-value">0</span>
-                            <span class="gauge-sub">/ <span id="daily-pts-budget">30</span> pts</span>
-                        </div>
-                    </div>
-
-                    <p id="daily-pts-status" style="font-weight: 700; font-size: 1.4rem; color: var(--brand-primary);">
-                        30 points disponibles
-                    </p>
-                </div>
-
-                <!-- Carte Calories & Macronutriments -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Énergie & Macronutriments du Jour</h2>
-                        <span id="daily-kcal-badge" class="badge badge-brand">0 / 2000 kcal</span>
-                    </div>
-
-                    <div class="macros-list">
-                        <!-- Calories -->
-                        <div>
-                            <div class="macro-item-header">
-                                <span class="macro-name"><span class="macro-dot" style="background: var(--brand-primary);"></span> Calories (Énergie)</span>
-                                <span id="macro-kcal-text" class="macro-numbers">0 / 2000 kcal</span>
-                            </div>
-                            <div class="progress-track">
-                                <div id="macro-kcal-bar" class="progress-fill" style="width: 0%; background: var(--brand-primary);"></div>
-                            </div>
-                        </div>
-
-                        <!-- Protéines -->
-                        <div>
-                            <div class="macro-item-header">
-                                <span class="macro-name"><span class="macro-dot" style="background: var(--accent-blue);"></span> Protéines</span>
-                                <span id="macro-prot-text" class="macro-numbers">0 / 120 g</span>
-                            </div>
-                            <div class="progress-track">
-                                <div id="macro-prot-bar" class="progress-fill" style="width: 0%; background: var(--accent-blue);"></div>
-                            </div>
-                        </div>
-
-                        <!-- Glucides -->
-                        <div>
-                            <div class="macro-item-header">
-                                <span class="macro-name"><span class="macro-dot" style="background: var(--accent-amber);"></span> Glucides</span>
-                                <span id="macro-carb-text" class="macro-numbers">0 / 220 g</span>
-                            </div>
-                            <div class="progress-track">
-                                <div id="macro-carb-bar" class="progress-fill" style="width: 0%; background: var(--accent-amber);"></div>
-                            </div>
-                        </div>
-
-                        <!-- Lipides -->
-                        <div>
-                            <div class="macro-item-header">
-                                <span class="macro-name"><span class="macro-dot" style="background: var(--accent-purple);"></span> Lipides</span>
-                                <span id="macro-fat-text" class="macro-numbers">0 / 70 g</span>
-                            </div>
-                            <div class="progress-track">
-                                <div id="macro-fat-bar" class="progress-fill" style="width: 0%; background: var(--accent-purple);"></div>
-                            </div>
-                        </div>
-
-                        <!-- Fibres -->
-                        <div>
-                            <div class="macro-item-header">
-                                <span class="macro-name"><span class="macro-dot" style="background: #0d9488;"></span> Fibres alimentaires</span>
-                                <span id="macro-fiber-text" class="macro-numbers">0 / 30 g</span>
-                            </div>
-                            <div class="progress-track">
-                                <div id="macro-fiber-bar" class="progress-fill" style="width: 0%; background: #0d9488;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Liste des aliments consommés ce jour -->
+        <!-- ONGLET 4 : BILAN MENSUEL -->
+        <section id="tab-monthly" class="tab-content">
             <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Aliments consommés (<span id="daily-items-count">0</span>)</h2>
-                    <button type="button" id="btn-clear-day" class="btn btn-danger btn-sm" hidden>🗑️ Vider cette journée</button>
+                <h2 style="margin-top:0;" id="monthly-title">Bilan du mois</h2>
+                <div class="points-summary-grid">
+                    <div class="metric-card">
+                        <h3>Moyenne Points / jour</h3>
+                        <div class="value" id="monthly-avg-points">0</div>
+                    </div>
+                    <div class="metric-card" style="background:var(--border);">
+                        <h3>Moyenne Calories / jour</h3>
+                        <div class="value" id="monthly-avg-calories" style="color:var(--text-main);">0 kcal</div>
+                    </div>
                 </div>
 
-                <div id="daily-entries-container" class="journal-entries"></div>
-            </div>
-        </section>
-
-        <!-- ==================================================================
-             ONGLET 3 : BILAN MENSUEL, HEATMAP & EXPORT
-             ================================================================== -->
-        <section id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" class="tab-panel" hidden>
-            <!-- Barre de sélection du mois & Export -->
-            <div class="date-navigator">
-                <div class="date-controls">
-                    <button type="button" id="btn-prev-month" class="btn btn-secondary btn-icon" aria-label="Mois précédent">◀</button>
-                    <input type="month" id="monthly-picker" class="form-control" style="width: auto; font-weight: 700;" aria-label="Choisir un mois">
-                    <button type="button" id="btn-next-month" class="btn btn-secondary btn-icon" aria-label="Mois suivant">▶</button>
-                </div>
-
-                <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
-                    <button type="button" id="btn-export-csv" class="btn btn-secondary btn-sm">📥 Export CSV (Excel)</button>
-                    <button type="button" id="btn-export-json" class="btn btn-secondary btn-sm">💾 Sauvegarde JSON</button>
+                <h3 style="margin-top:2rem;">Calendrier d'activité du mois</h3>
+                <div class="heatmap-grid" id="monthly-heatmap">
+                    <!-- Généré dynamiquement -->
                 </div>
             </div>
 
-            <!-- Cartes KPI du mois -->
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <span class="kpi-label">Total Points Mois</span>
-                    <div id="kpi-month-points" class="kpi-value">0 pts</div>
-                    <span id="kpi-month-avg-pts" class="kpi-sub">Moy. 0 pts / jour actif</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-label">Total Calories Mois</span>
-                    <div id="kpi-month-kcal" class="kpi-value">0 kcal</div>
-                    <span id="kpi-month-avg-kcal" class="kpi-sub">Moy. 0 kcal / jour actif</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-label">Jours dans l'objectif</span>
-                    <div id="kpi-month-success" class="kpi-value" style="color: var(--brand-primary);">0 / 0</div>
-                    <span class="kpi-sub">Respect du capital points</span>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-label">Macros Cumulées</span>
-                    <div id="kpi-month-prot" class="kpi-value" style="font-size: 2rem;">0g Prot.</div>
-                    <span id="kpi-month-macros-sub" class="kpi-sub">0g Gluc. • 0g Lip.</span>
-                </div>
-            </div>
-
-            <!-- Calendrier Heatmap Interactif -->
-            <div class="card" style="margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h2 class="card-title">Calendrier Mensuel de Suivi (Cliquez sur un jour pour le détailler)</h2>
-                </div>
-
-                <div class="calendar-weekdays" aria-hidden="true">
-                    <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
-                </div>
-                <div id="monthly-calendar-grid" class="calendar-grid"></div>
-
-                <div class="legend-row">
-                    <span class="legend-item"><span class="legend-swatch" style="background: var(--brand-light); border-color: var(--brand-primary);"></span> Sous le capital</span>
-                    <span class="legend-item"><span class="legend-swatch" style="background: var(--accent-amber-light); border-color: var(--accent-amber);"></span> Proche (85%–100%)</span>
-                    <span class="legend-item"><span class="legend-swatch" style="background: var(--accent-red-light); border-color: var(--accent-red);"></span> Dépassé</span>
-                    <span class="legend-item"><span class="legend-swatch" style="background: var(--bg-surface-alt);"></span> Aucune saisie</span>
-                </div>
-            </div>
-
-            <!-- Graphique SVG d'évolution quotidienne sur le mois -->
             <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Évolution Quotidienne des Points sur le Mois</h2>
-                    <span class="badge badge-brand">Ligne verte = Capital journalier</span>
-                </div>
-
-                <div class="chart-scroll-container">
-                    <svg id="monthly-bar-chart" class="monthly-svg-chart" viewBox="0 0 800 240" role="img" aria-label="Graphique en barres des points consommés chaque jour du mois"></svg>
+                <h3 style="margin-top:0;">Export des données</h3>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                    <button class="secondary" id="btn-export-json">Exporter en JSON</button>
+                    <button class="secondary" id="btn-export-csv">Exporter en CSV</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer class="app-footer">
-        <p><strong>NutriPoints</strong> — Application autonome hébergeable sur GitHub Pages • Données produits fournies par <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a>.</p>
-    </footer>
+    <!-- NAVIGATION INFÉRIEURE -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-target="tab-dashboard">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Journal</span>
+        </button>
+        <button class="nav-item" data-target="tab-scanner">
+            <svg viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5m-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6m6.5-8v3h-3v-3h3M19 5h-6v6h6V5m-6 9h1.5v1.5H13V14m1.5 1.5H16V17h-1.5v-1.5M16 14h1.5v1.5H16V14m-3 3h1.5v1.5H13V17m1.5 1.5H16V20h-1.5v-1.5M16 17h1.5v1.5H16V17m0 1.5H19V20h-3v-1.5M19 14h1.5V17H19v-3m0-3h1.5v1.5H19V11Z"/></svg>
+            <span>Scanner</span>
+        </button>
+        <button class="nav-item" data-target="tab-profile">
+            <svg viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4Z"/></svg>
+            <span>Profil</span>
+        </button>
+        <button class="nav-item" data-target="tab-monthly">
+            <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V8h14v11M7 10h5v5H7v-5Z"/></svg>
+            <span>Bilan</span>
+        </button>
+    </nav>
 
-    <!-- ======================================================================
-         MODALE 1 : RÉGLAGE DU CAPITAL POINTS & OBJECTIFS NUTRITIONNELS
-         ====================================================================== -->
-    <div id="modal-goals" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-goals-title" hidden>
-        <div class="modal-dialog">
-            <div class="card-header">
-                <h2 id="modal-goals-title" class="card-title">⚙️ Capital Points & Objectifs</h2>
-                <button type="button" class="btn btn-secondary btn-icon" data-close-modal="modal-goals" aria-label="Fermer">✕</button>
+    <!-- MODAL PARAMÈTRES / CAPITAL JOURNALIER -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">Modifier le Capital Journalier</h3>
+            <div class="form-group">
+                <label for="modal-daily-points">Points maximum / jour</label>
+                <input type="number" id="modal-daily-points" value="30" min="10" max="200">
             </div>
-
-            <form id="goals-form" style="display: flex; flex-direction: column; gap: 1.4rem;">
-                <div class="form-group">
-                    <label for="goal-points-input" class="form-label">Capital Points Journalier (10 à 200 pts)</label>
-                    <input type="number" id="goal-points-input" class="form-control" min="10" max="200" value="30" required>
-                </div>
-
-                <div class="grid-form-2">
-                    <div class="form-group">
-                        <label for="goal-kcal-input" class="form-label">Objectif Calories (kcal)</label>
-                        <input type="number" id="goal-kcal-input" class="form-control" min="800" max="6000" step="50" value="2000" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-prot-input" class="form-label">Objectif Protéines (g)</label>
-                        <input type="number" id="goal-prot-input" class="form-control" min="20" max="400" value="120" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-carb-input" class="form-label">Objectif Glucides (g)</label>
-                        <input type="number" id="goal-carb-input" class="form-control" min="20" max="600" value="220" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-fat-input" class="form-label">Objectif Lipides (g)</label>
-                        <input type="number" id="goal-fat-input" class="form-control" min="10" max="250" value="70" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="goal-fiber-input" class="form-label">Objectif Fibres (g)</label>
-                        <input type="number" id="goal-fiber-input" class="form-control" min="5" max="100" value="30" required>
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 0.8rem;">
-                    <button type="button" class="btn btn-secondary" data-close-modal="modal-goals">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Enregistrer mes objectifs</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ======================================================================
-         MODALE 2 : FORMULE DE CALCUL NUTRIPOINTS
-         ====================================================================== -->
-    <div id="modal-formula" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-formula-title" hidden>
-        <div class="modal-dialog">
-            <div class="card-header">
-                <h2 id="modal-formula-title" class="card-title">ℹ️ Algorithme NutriPoints</h2>
-                <button type="button" class="btn btn-secondary btn-icon" data-close-modal="modal-formula" aria-label="Fermer">✕</button>
+            <div class="form-group">
+                <label for="modal-daily-calories">Objectif calories / jour (kcal)</label>
+                <input type="number" id="modal-daily-calories" value="2000" min="500" max="5000">
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1.2rem; font-size: 1.4rem; color: var(--text-secondary);">
-                <p>Le score <strong>NutriPoints</strong> évalue la densité nutritionnelle d'une portion en valorisant les nutriments rassasiants (protéines, fibres) et en pénalisant les calories vides (sucres ajoutés, graisses saturées).</p>
-                <pre style="background: var(--bg-surface-alt); padding: 1.2rem; border-radius: var(--radius-md); font-size: 1.25rem; overflow-x: auto; color: var(--text-primary); border: 0.1rem solid var(--border-color);">Points = max(0, arrondi(
-  (Calories × 0,0305)
-+ (Graisses saturées × 0,275)
-+ (Sucres × 0,12)
-- (Protéines × 0,098)
-- (Fibres × 0,05)
-))</pre>
-                <button type="button" class="btn btn-primary" data-close-modal="modal-formula">Fermer</button>
+            <div style="display:flex; justify-content:flex-end; gap:1rem;">
+                <button class="secondary" id="btn-close-settings">Annuler</button>
+                <button id="btn-save-settings">Enregistrer</button>
             </div>
         </div>
     </div>
 
-    <!-- ======================================================================
-         ARCHITECTURE JAVASCRIPT ORIENTÉE OBJET ES6+
-         ====================================================================== -->
     <script>
-        /**
-         * 1. PointsCalculator : Moteur mathématique de calcul des points et macros
-         */
-        class PointsCalculator {
-            static computePoints({ kcal = 0, saturatedFat = 0, sugars = 0, proteins = 0, fiber = 0 }) {
-                const raw = (kcal * 0.0305)
-                          + (saturatedFat * 0.275)
-                          + (sugars * 0.12)
-                          - (proteins * 0.098)
-                          - (fiber * 0.05);
-                return Math.max(0, Math.round(raw));
-            }
-
-            static scaleNutrients(nutrients100g, portionGrams) {
-                const ratio = Math.max(0, portionGrams) / 100;
-                const scaled = {
-                    kcal: +(nutrients100g.kcal * ratio).toFixed(1),
-                    proteins: +(nutrients100g.proteins * ratio).toFixed(1),
-                    carbs: +(nutrients100g.carbs * ratio).toFixed(1),
-                    sugars: +(nutrients100g.sugars * ratio).toFixed(1),
-                    fat: +(nutrients100g.fat * ratio).toFixed(1),
-                    saturatedFat: +(nutrients100g.saturatedFat * ratio).toFixed(1),
-                    fiber: +(nutrients100g.fiber * ratio).toFixed(1)
-                };
-                scaled.points = this.computePoints(scaled);
-                return scaled;
-            }
-        }
-
-        /**
-         * 2. StorageManager : Persistance locale (Objectifs, Historique par date, Thème)
-         */
-        class StorageManager {
+        /* --- APPLICATION STATE & SERVICES --- */
+        class AppState {
             constructor() {
-                this.KEYS = {
-                    GOALS: 'nutripoints_v2_goals',
-                    LOGS: 'nutripoints_v2_logs',
-                    THEME: 'nutripoints_v2_theme'
-                };
-                this.defaultGoals = {
-                    points: 30,
-                    kcal: 2000,
-                    proteins: 120,
-                    carbs: 220,
-                    fat: 70,
-                    fiber: 30
-                };
+                this.load();
             }
 
-            getGoals() {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(this.KEYS.GOALS));
-                    return { ...this.defaultGoals, ...(saved || {}) };
-                } catch {
-                    return { ...this.defaultGoals };
+            load() {
+                const data = JSON.parse(localStorage.getItem('nutripoints_state') || '{}');
+                this.firstname = data.firstname || '';
+                this.accent = data.accent || 'green';
+                this.theme = data.theme || 'dark';
+                this.dailyPointsTarget = data.dailyPointsTarget || 30;
+                this.dailyCaloriesTarget = data.dailyCaloriesTarget || 2000;
+                this.currentDate = data.currentDate || new Date().toISOString().split('T')[0];
+                this.logs = data.logs || {}; // { 'YYYY-MM-DD': [ {name, calories, p, g, l, f, points, serving} ] }
+                this.weights = data.weights || []; // [ {date, weight} ]
+                this.profile = data.profile || { gender: 'male', age: 45, height: 175, weight: 80, targetWeight: 70, activity: 1.55 };
+            }
+
+            save() {
+                localStorage.setItem('nutripoints_state', JSON.stringify({
+                    firstname: this.firstname,
+                    accent: this.accent,
+                    theme: this.theme,
+                    dailyPointsTarget: this.dailyPointsTarget,
+                    dailyCaloriesTarget: this.dailyCaloriesTarget,
+                    currentDate: this.currentDate,
+                    logs: this.logs,
+                    weights: this.weights,
+                    profile: this.profile
+                }));
+            }
+
+            getTodayLogs() {
+                return this.logs[this.currentDate] || [];
+            }
+
+            addFood(item) {
+                if (!this.logs[this.currentDate]) {
+                    this.logs[this.currentDate] = [];
                 }
+                this.logs[this.currentDate].push(item);
+                this.save();
             }
 
-            saveGoals(goals) {
-                localStorage.setItem(this.KEYS.GOALS, JSON.stringify(goals));
-            }
-
-            getAllLogs() {
-                try {
-                    const logs = JSON.parse(localStorage.getItem(this.KEYS.LOGS));
-                    return (logs && typeof logs === 'object') ? logs : {};
-                } catch {
-                    return {};
+            removeFood(index) {
+                if (this.logs[this.currentDate]) {
+                    this.logs[this.currentDate].splice(index, 1);
+                    this.save();
                 }
-            }
-
-            getLogsByDate(dateStr) {
-                const all = this.getAllLogs();
-                return Array.isArray(all[dateStr]) ? all[dateStr] : [];
-            }
-
-            addEntry(dateStr, entry) {
-                const all = this.getAllLogs();
-                if (!Array.isArray(all[dateStr])) all[dateStr] = [];
-                all[dateStr].unshift(entry);
-                localStorage.setItem(this.KEYS.LOGS, JSON.stringify(all));
-            }
-
-            removeEntry(dateStr, entryId) {
-                const all = this.getAllLogs();
-                if (!Array.isArray(all[dateStr])) return;
-                all[dateStr] = all[dateStr].filter(item => item.id !== entryId);
-                if (all[dateStr].length === 0) delete all[dateStr];
-                localStorage.setItem(this.KEYS.LOGS, JSON.stringify(all));
-            }
-
-            clearDate(dateStr) {
-                const all = this.getAllLogs();
-                delete all[dateStr];
-                localStorage.setItem(this.KEYS.LOGS, JSON.stringify(all));
-            }
-
-            getTheme() {
-                return localStorage.getItem(this.KEYS.THEME) || 'light';
-            }
-
-            saveTheme(theme) {
-                localStorage.setItem(this.KEYS.THEME, theme);
             }
         }
 
-        /**
-         * 3. OpenFoodFactsService : Interrogation de l'API Open Food Facts v2
-         */
-        class OpenFoodFactsService {
-            static async fetchByBarcode(barcode) {
-                const cleanCode = String(barcode).trim().replace(/[^0-9]/g, '');
-                if (!cleanCode) throw new Error("Code-barres invalide.");
+        const state = new AppState();
 
-                const fields = 'product_name,product_name_fr,brands,image_front_small_url,image_url,nutriscore_grade,nutriments,serving_quantity';
-                const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanCode)}.json?fields=${fields}`;
-
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Erreur serveur Open Food Facts (${response.status})`);
-                }
-
-                const data = await response.json();
-                if (data.status !== 1 || !data.product) {
-                    throw new Error(`Produit introuvable pour le code ${cleanCode}.`);
-                }
-
-                const p = data.product;
-                const n = p.nutriments || {};
-
-                let kcal100 = parseFloat(n['energy-kcal_100g']);
-                if (isNaN(kcal100) && !isNaN(parseFloat(n['energy_100g']))) {
-                    kcal100 = parseFloat(n['energy_100g']) / 4.184;
-                }
-
-                const defaultPortion = (p.serving_quantity && !isNaN(parseFloat(p.serving_quantity)) && parseFloat(p.serving_quantity) > 0)
-                    ? Math.round(parseFloat(p.serving_quantity))
-                    : 100;
-
-                return {
-                    barcode: cleanCode,
-                    name: p.product_name_fr || p.product_name || "Produit alimentaire",
-                    brand: p.brands ? p.brands.split(',')[0].trim() : "Marque non précisée",
-                    image: p.image_front_small_url || p.image_url || "https://placehold.co/120x120/eef3f0/475850?text=Produit",
-                    nutriscore: (p.nutriscore_grade || "?").toUpperCase(),
-                    defaultPortion,
-                    nutrients100g: {
-                        kcal: Math.max(0, kcal100 || 0),
-                        proteins: Math.max(0, parseFloat(n['proteins_100g']) || 0),
-                        carbs: Math.max(0, parseFloat(n['carbohydrates_100g']) || 0),
-                        sugars: Math.max(0, parseFloat(n['sugars_100g']) || 0),
-                        fat: Math.max(0, parseFloat(n['fat_100g']) || 0),
-                        saturatedFat: Math.max(0, parseFloat(n['saturated-fat_100g']) || 0),
-                        fiber: Math.max(0, parseFloat(n['fiber_100g']) || 0)
-                    }
-                };
-            }
+        /* --- CALCULATEUR DE POINTS & MACROS --- */
+        function calculatePoints(calories, proteins, carbs, fats, fibers) {
+            // Algorithme inspiré de l'indice nutritionnel (Protéines & Fibres réduisent les points, Graisses & Calories les augmentent)
+            let pts = (calories / 50) + (fats / 3.5) - (fibers / 4) - (proteins / 10);
+            return Math.max(0, Math.round(pts * 10) / 10);
         }
 
-        /**
-         * 4. BarcodeScannerEngine : Double moteur hybride (BarcodeDetector natif + ZXing UMD + Photo)
-         */
-        class BarcodeScannerEngine {
-            constructor({ videoEl, onDetected, onError, onStatus }) {
-                this.videoEl = videoEl;
-                this.onDetected = onDetected;
-                this.onError = onError;
-                this.onStatus = onStatus;
-
-                this.stream = null;
-                this.isRunning = false;
-                this.rafId = null;
-                this.devices = [];
-                this.currentDeviceIndex = 0;
-
-                // Offscreen canvas pour analyse d'images ZXing
-                this.canvas = document.createElement('canvas');
-                this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
-
-                // Initialisation du détecteur natif si supporté par le navigateur
-                this.nativeDetector = null;
-                if ('BarcodeDetector' in window) {
-                    try {
-                        this.nativeDetector = new window.BarcodeDetector({
-                            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
-                        });
-                    } catch {
-                        this.nativeDetector = null;
-                    }
-                }
-
-                // Initialisation du lecteur ZXing multi-format
-                this.zxingReader = null;
-                if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
-                    const hints = new Map();
-                    const formats = [
-                        window.ZXing.BarcodeFormat.EAN_13,
-                        window.ZXing.BarcodeFormat.EAN_8,
-                        window.ZXing.BarcodeFormat.UPC_A,
-                        window.ZXing.BarcodeFormat.UPC_E,
-                        window.ZXing.BarcodeFormat.CODE_128
-                    ];
-                    hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-                    hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
-                    this.zxingReader = new window.ZXing.BrowserMultiFormatReader(hints);
-                }
-            }
-
-            async start(specificDeviceId = null) {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    this.onError("Votre navigateur ou connexion (HTTPS requis) ne permet pas l'accès à la caméra. Utilisez le bouton « Scanner depuis une photo ».");
-                    return false;
-                }
-
-                this.stop();
-
-                try {
-                    const constraints = {
-                        audio: false,
-                        video: specificDeviceId
-                            ? { deviceId: { exact: specificDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                            : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                    };
-
-                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    this.videoEl.srcObject = this.stream;
-                    await this.videoEl.play();
-
-                    this.isRunning = true;
-                    const engineName = this.nativeDetector ? "Natif + ZXing" : "ZXing Multi-Format";
-                    this.onStatus(engineName);
-
-                    // Énumérer les caméras APRÈS obtention de la permission
-                    await this.refreshDevices();
-
-                    this.scanLoop();
-                    return true;
-                } catch (err) {
-                    let msg = "Impossible d'ouvrir la caméra.";
-                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                        msg = "Accès caméra refusé. Autorisez la caméra dans les réglages du navigateur ou utilisez « Scanner depuis une photo ».";
-                    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                        msg = "Aucune caméra détectée sur cet appareil.";
-                    } else if (err.name === 'NotReadableError') {
-                        msg = "La caméra est déjà utilisée par une autre application.";
-                    }
-                    this.onError(msg);
-                    return false;
-                }
-            }
-
-            async refreshDevices() {
-                try {
-                    const allDevices = await navigator.mediaDevices.enumerateDevices();
-                    this.devices = allDevices.filter(d => d.kind === 'videoinput');
-                } catch {
-                    this.devices = [];
-                }
-            }
-
-            async switchCamera() {
-                if (this.devices.length < 2) return;
-                this.currentDeviceIndex = (this.currentDeviceIndex + 1) % this.devices.length;
-                const nextDevice = this.devices[this.currentDeviceIndex];
-                await this.start(nextDevice.deviceId);
-            }
-
-            stop() {
-                this.isRunning = false;
-                if (this.rafId) {
-                    cancelAnimationFrame(this.rafId);
-                    this.rafId = null;
-                }
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                    this.stream = null;
-                }
-                if (this.videoEl) {
-                    this.videoEl.srcObject = null;
-                }
-            }
-
-            scanLoop() {
-                if (!this.isRunning) return;
-
-                const processFrame = async () => {
-                    if (!this.isRunning) return;
-
-                    if (this.videoEl.readyState >= this.videoEl.HAVE_ENOUGH_DATA) {
-                        const code = await this.decodeVideoFrame();
-                        if (code) {
-                            this.stop();
-                            this.onDetected(code);
-                            return;
-                        }
-                    }
-
-                    // Cadence ~6 analyses/seconde pour préserver la batterie mobile
-                    setTimeout(() => {
-                        if (this.isRunning) {
-                            this.rafId = requestAnimationFrame(processFrame);
-                        }
-                    }, 150);
-                };
-
-                this.rafId = requestAnimationFrame(processFrame);
-            }
-
-            async decodeVideoFrame() {
-                // 1. Tentative prioritaire avec BarcodeDetector natif (ultra-rapide)
-                if (this.nativeDetector) {
-                    try {
-                        const barcodes = await this.nativeDetector.detect(this.videoEl);
-                        if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                            return barcodes[0].rawValue;
-                        }
-                    } catch {
-                        // Bascule silencieuse vers ZXing
-                    }
-                }
-
-                // 2. Fallback avec ZXing sur un canvas redimensionné
-                if (this.zxingReader && this.videoEl.videoWidth > 0) {
-                    try {
-                        const maxWidth = 800;
-                        const scale = Math.min(1, maxWidth / this.videoEl.videoWidth);
-                        this.canvas.width = Math.round(this.videoEl.videoWidth * scale);
-                        this.canvas.height = Math.round(this.videoEl.videoHeight * scale);
-                        this.ctx.drawImage(this.videoEl, 0, 0, this.canvas.width, this.canvas.height);
-
-                        const luminanceSource = new window.ZXing.HTMLCanvasElementLuminanceSource(this.canvas);
-                        const binaryBitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(luminanceSource));
-                        const result = this.zxingReader.decodeBitmap(binaryBitmap);
-                        if (result && result.getText()) {
-                            return result.getText();
-                        }
-                    } catch {
-                        // Aucun code-barres trouvé sur cette image
-                    }
-                }
-
-                return null;
-            }
-
-            async decodeImageFile(file) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    const objectUrl = URL.createObjectURL(file);
-
-                    img.onload = async () => {
-                        try {
-                            // Essai 1 : BarcodeDetector natif sur l'image
-                            if (this.nativeDetector) {
-                                try {
-                                    const res = await this.nativeDetector.detect(img);
-                                    if (res && res.length > 0 && res[0].rawValue) {
-                                        URL.revokeObjectURL(objectUrl);
-                                        resolve(res[0].rawValue);
-                                        return;
-                                    }
-                                } catch {}
-                            }
-
-                            // Essai 2 : ZXing sur l'image dessinée dans le canvas
-                            if (this.zxingReader) {
-                                const maxDim = 1200;
-                                const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
-                                this.canvas.width = Math.round(img.width * ratio);
-                                this.canvas.height = Math.round(img.height * ratio);
-                                this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-
-                                const lum = new window.ZXing.HTMLCanvasElementLuminanceSource(this.canvas);
-                                const bitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(lum));
-                                const zxingRes = this.zxingReader.decodeBitmap(bitmap);
-                                if (zxingRes && zxingRes.getText()) {
-                                    URL.revokeObjectURL(objectUrl);
-                                    resolve(zxingRes.getText());
-                                    return;
-                                }
-                            }
-
-                            URL.revokeObjectURL(objectUrl);
-                            reject(new Error("Aucun code-barres lisible sur cette photo. Rapprochez-vous et évitez les reflets."));
-                        } catch (e) {
-                            URL.revokeObjectURL(objectUrl);
-                            reject(new Error("Impossible de décoder le code-barres sur cette image."));
-                        }
-                    };
-
-                    img.onerror = () => {
-                        URL.revokeObjectURL(objectUrl);
-                        reject(new Error("Fichier image invalide."));
-                    };
-
-                    img.src = objectUrl;
-                });
-            }
-        }
-
-        /**
-         * 5. MonthlyAnalytics : Agrégation statistique mensuelle, Heatmap et Graphique SVG
-         */
-        class MonthlyAnalytics {
-            static summarizeMonth(allLogs, yearMonthStr, dailyPointsBudget) {
-                const [year, month] = yearMonthStr.split('-').map(Number);
-                const daysInMonth = new Date(year, month, 0).getDate();
-
-                let totalPoints = 0;
-                let totalKcal = 0;
-                let totalProteins = 0;
-                let totalCarbs = 0;
-                let totalFat = 0;
-                let activeDaysCount = 0;
-                let daysWithinBudget = 0;
-
-                const daysData = [];
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateStr = `${yearMonthStr}-${String(day).padStart(2, '0')}`;
-                    const entries = Array.isArray(allLogs[dateStr]) ? allLogs[dateStr] : [];
-
-                    const dayTotals = entries.reduce((acc, item) => {
-                        acc.points += Number(item.points) || 0;
-                        acc.kcal += Number(item.kcal) || 0;
-                        acc.proteins += Number(item.proteins) || 0;
-                        acc.carbs += Number(item.carbs) || 0;
-                        acc.fat += Number(item.fat) || 0;
-                        return acc;
-                    }, { points: 0, kcal: 0, proteins: 0, carbs: 0, fat: 0 });
-
-                    const hasEntries = entries.length > 0;
-                    if (hasEntries) {
-                        activeDaysCount++;
-                        if (dayTotals.points <= dailyPointsBudget) {
-                            daysWithinBudget++;
-                        }
-                    }
-
-                    totalPoints += dayTotals.points;
-                    totalKcal += dayTotals.kcal;
-                    totalProteins += dayTotals.proteins;
-                    totalCarbs += dayTotals.carbs;
-                    totalFat += dayTotals.fat;
-
-                    daysData.push({
-                        day,
-                        dateStr,
-                        hasEntries,
-                        ...dayTotals
-                    });
-                }
-
-                return {
-                    year,
-                    month,
-                    daysInMonth,
-                    totalPoints: Math.round(totalPoints),
-                    totalKcal: Math.round(totalKcal),
-                    totalProteins: Math.round(totalProteins),
-                    totalCarbs: Math.round(totalCarbs),
-                    totalFat: Math.round(totalFat),
-                    activeDaysCount,
-                    daysWithinBudget,
-                    avgPoints: activeDaysCount > 0 ? Math.round(totalPoints / activeDaysCount) : 0,
-                    avgKcal: activeDaysCount > 0 ? Math.round(totalKcal / activeDaysCount) : 0,
-                    daysData
-                };
-            }
-        }
-
-        /**
-         * 6. NutriPointsApp : Contrôleur principal de l'interface et des interactions
-         */
-        class NutriPointsApp {
-            constructor() {
-                this.storage = new StorageManager();
-                this.goals = this.storage.getGoals();
-                this.todayStr = this.getLocalISODate(new Date());
-                this.selectedDate = this.todayStr;
-                this.selectedMonth = this.todayStr.slice(0, 7);
-                this.currentScannedProduct = null;
-
-                this.scanner = new BarcodeScannerEngine({
-                    videoEl: document.getElementById('scanner-video'),
-                    onDetected: (code) => this.handleBarcodeDetected(code),
-                    onError: (msg) => {
-                        this.resetScannerUI();
-                        this.showToast(msg, 'error');
-                    },
-                    onStatus: (engineName) => {
-                        document.getElementById('scanner-engine-label').textContent = `Moteur : ${engineName}`;
-                    }
-                });
-
-                this.initTheme();
-                this.bindEvents();
-                this.syncDateInputs();
-                this.updateCustomPreview();
-                this.renderAll();
-            }
-
-            getLocalISODate(dateObj) {
-                const offset = dateObj.getTimezoneOffset();
-                const local = new Date(dateObj.getTime() - (offset * 60 * 1000));
-                return local.toISOString().split('T')[0];
-            }
-
-            initTheme() {
-                const savedTheme = this.storage.getTheme();
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                document.getElementById('theme-icon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-            }
-
-            syncDateInputs() {
-                document.getElementById('target-log-date').value = this.selectedDate;
-                document.getElementById('custom-date').value = this.selectedDate;
-                document.getElementById('daily-date-picker').value = this.selectedDate;
-                document.getElementById('monthly-picker').value = this.selectedMonth;
-            }
-
-            bindEvents() {
-                // Thème clair/sombre
-                document.getElementById('btn-toggle-theme').addEventListener('click', () => {
-                    const current = document.documentElement.getAttribute('data-theme');
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    document.documentElement.setAttribute('data-theme', next);
-                    document.getElementById('theme-icon').textContent = next === 'dark' ? '☀️' : '🌙';
-                    this.storage.saveTheme(next);
-                });
-
-                // Onglets principaux
-                ['scanner', 'daily', 'monthly'].forEach(tabName => {
-                    document.getElementById(`tab-${tabName}`).addEventListener('click', () => {
-                        this.switchMainTab(tabName);
-                    });
-                });
-
-                // Sous-onglets Produit scanné / Calculateur libre
-                ['product', 'custom'].forEach(subName => {
-                    document.getElementById(`subtab-${subName}`).addEventListener('click', () => {
-                        this.switchSubTab(subName);
-                    });
-                });
-
-                // Caméra & Scan
-                document.getElementById('btn-start-camera').addEventListener('click', () => this.startCameraScan());
-                document.getElementById('btn-stop-camera').addEventListener('click', () => {
-                    this.scanner.stop();
-                    this.resetScannerUI();
-                });
-                document.getElementById('btn-switch-camera').addEventListener('click', async () => {
-                    await this.scanner.switchCamera();
-                    this.updateCameraSelectUI();
-                });
-                document.getElementById('camera-select').addEventListener('change', async (e) => {
-                    if (e.target.value) {
-                        await this.scanner.start(e.target.value);
-                    }
-                });
-
-                // Scan depuis photo (secours mobile)
-                document.getElementById('btn-scan-photo').addEventListener('click', () => {
-                    document.getElementById('barcode-image-input').click();
-                });
-                document.getElementById('barcode-image-input').addEventListener('change', async (e) => {
-                    const file = e.target.files && e.target.files[0];
-                    if (!file) return;
-                    try {
-                        this.showToast("Analyse de la photo en cours...", "info");
-                        const code = await this.scanner.decodeImageFile(file);
-                        this.handleBarcodeDetected(code);
-                    } catch (err) {
-                        this.showToast(err.message, "error");
-                    } finally {
-                        e.target.value = '';
-                    }
-                });
-
-                // Recherche manuelle & Exemples
-                document.getElementById('manual-barcode-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const code = document.getElementById('barcode-text-input').value;
-                    if (code) this.lookupBarcode(code);
-                });
-
-                document.querySelectorAll('[data-sample-barcode]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const code = btn.getAttribute('data-sample-barcode');
-                        document.getElementById('barcode-text-input').value = code;
-                        this.lookupBarcode(code);
-                    });
-                });
-
-                // Portion dynamique du produit scanné
-                const portionNum = document.getElementById('portion-number-input');
-                const portionRange = document.getElementById('portion-range-input');
-
-                portionRange.addEventListener('input', (e) => {
-                    portionNum.value = e.target.value;
-                    this.refreshScannedProductDisplay();
-                });
-
-                portionNum.addEventListener('input', (e) => {
-                    let val = parseInt(e.target.value, 10);
-                    if (isNaN(val) || val < 1) val = 1;
-                    portionRange.value = Math.min(500, val);
-                    this.refreshScannedProductDisplay();
-                });
-
-                document.querySelectorAll('[data-portion]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const g = parseInt(btn.getAttribute('data-portion'), 10);
-                        portionNum.value = g;
-                        portionRange.value = Math.min(500, g);
-                        this.refreshScannedProductDisplay();
-                    });
-                });
-
-                // Ajout produit scanné au journal
-                document.getElementById('btn-add-scanned-food').addEventListener('click', () => {
-                    if (!this.currentScannedProduct) return;
-                    const portion = Math.max(1, parseInt(portionNum.value, 10) || 100);
-                    const dateStr = document.getElementById('target-log-date').value || this.selectedDate;
-                    const scaled = PointsCalculator.scaleNutrients(this.currentScannedProduct.nutrients100g, portion);
-
-                    this.storage.addEntry(dateStr, {
-                        id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                        name: this.currentScannedProduct.name,
-                        brand: this.currentScannedProduct.brand,
-                        portion,
-                        ...scaled
-                    });
-
-                    this.selectedDate = dateStr;
-                    this.selectedMonth = dateStr.slice(0, 7);
-                    this.syncDateInputs();
-                    this.renderAll();
-                    this.showToast(`✅ ${this.currentScannedProduct.name} (${scaled.points} pts) ajouté !`);
-                });
-
-                // Calculateur nutritionnel libre
-                const customInputs = ['custom-kcal', 'custom-prot', 'custom-carb', 'custom-sugar', 'custom-fat', 'custom-satfat', 'custom-fiber'];
-                customInputs.forEach(id => {
-                    document.getElementById(id).addEventListener('input', () => this.updateCustomPreview());
-                });
-
-                document.getElementById('custom-food-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const name = document.getElementById('custom-name').value.trim();
-                    const portion = Math.max(1, parseFloat(document.getElementById('custom-weight').value) || 100);
-                    const dateStr = document.getElementById('custom-date').value || this.selectedDate;
-
-                    const nutriments = {
-                        kcal: +(parseFloat(document.getElementById('custom-kcal').value) || 0).toFixed(1),
-                        proteins: +(parseFloat(document.getElementById('custom-prot').value) || 0).toFixed(1),
-                        carbs: +(parseFloat(document.getElementById('custom-carb').value) || 0).toFixed(1),
-                        sugars: +(parseFloat(document.getElementById('custom-sugar').value) || 0).toFixed(1),
-                        fat: +(parseFloat(document.getElementById('custom-fat').value) || 0).toFixed(1),
-                        saturatedFat: +(parseFloat(document.getElementById('custom-satfat').value) || 0).toFixed(1),
-                        fiber: +(parseFloat(document.getElementById('custom-fiber').value) || 0).toFixed(1)
-                    };
-                    nutriments.points = PointsCalculator.computePoints(nutriments);
-
-                    this.storage.addEntry(dateStr, {
-                        id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                        name,
-                        brand: "Saisie libre",
-                        portion,
-                        ...nutriments
-                    });
-
-                    this.selectedDate = dateStr;
-                    this.selectedMonth = dateStr.slice(0, 7);
-                    this.syncDateInputs();
-                    this.renderAll();
-                    document.getElementById('custom-name').value = '';
-                    this.showToast(`✅ ${name} (${nutriments.points} pts) enregistré !`);
-                });
-
-                // Navigation dates (Suivi Journalier)
-                document.getElementById('daily-date-picker').addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        this.selectedDate = e.target.value;
-                        this.selectedMonth = this.selectedDate.slice(0, 7);
-                        this.syncDateInputs();
-                        this.renderDailyView();
-                    }
-                });
-
-                document.getElementById('btn-prev-day').addEventListener('click', () => this.shiftSelectedDate(-1));
-                document.getElementById('btn-next-day').addEventListener('click', () => this.shiftSelectedDate(1));
-                document.getElementById('btn-today-jump').addEventListener('click', () => {
-                    this.selectedDate = this.todayStr;
-                    this.selectedMonth = this.todayStr.slice(0, 7);
-                    this.syncDateInputs();
-                    this.renderDailyView();
-                });
-
-                document.getElementById('btn-clear-day').addEventListener('click', () => {
-                    this.storage.clearDate(this.selectedDate);
-                    this.renderAll();
-                    this.showToast("Journée vidée.", "warn");
-                });
-
-                // Navigation mois & Exports (Bilan Mensuel)
-                document.getElementById('monthly-picker').addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        this.selectedMonth = e.target.value;
-                        this.renderMonthlyView();
-                    }
-                });
-                document.getElementById('btn-prev-month').addEventListener('click', () => this.shiftSelectedMonth(-1));
-                document.getElementById('btn-next-month').addEventListener('click', () => this.shiftSelectedMonth(1));
-                document.getElementById('btn-export-csv').addEventListener('click', () => this.exportCSV());
-                document.getElementById('btn-export-json').addEventListener('click', () => this.exportJSON());
-
-                // Modales Objectifs & Formule
-                const openGoals = () => {
-                    document.getElementById('goal-points-input').value = this.goals.points;
-                    document.getElementById('goal-kcal-input').value = this.goals.kcal;
-                    document.getElementById('goal-prot-input').value = this.goals.proteins;
-                    document.getElementById('goal-carb-input').value = this.goals.carbs;
-                    document.getElementById('goal-fat-input').value = this.goals.fat;
-                    document.getElementById('goal-fiber-input').value = this.goals.fiber;
-                    document.getElementById('modal-goals').hidden = false;
-                };
-
-                document.getElementById('btn-open-goals').addEventListener('click', openGoals);
-                document.getElementById('btn-inline-edit-capital').addEventListener('click', openGoals);
-                document.getElementById('btn-open-formula').addEventListener('click', () => {
-                    document.getElementById('modal-formula').hidden = false;
-                });
-
-                document.querySelectorAll('[data-close-modal]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const modalId = btn.getAttribute('data-close-modal');
-                        document.getElementById(modalId).hidden = true;
-                    });
-                });
-
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        document.querySelectorAll('.modal-backdrop').forEach(m => m.hidden = true);
-                    }
-                });
-
-                document.getElementById('goals-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.goals = {
-                        points: Math.max(10, Math.min(200, parseInt(document.getElementById('goal-points-input').value, 10) || 30)),
-                        kcal: Math.max(800, parseInt(document.getElementById('goal-kcal-input').value, 10) || 2000),
-                        proteins: Math.max(20, parseInt(document.getElementById('goal-prot-input').value, 10) || 120),
-                        carbs: Math.max(20, parseInt(document.getElementById('goal-carb-input').value, 10) || 220),
-                        fat: Math.max(10, parseInt(document.getElementById('goal-fat-input').value, 10) || 70),
-                        fiber: Math.max(5, parseInt(document.getElementById('goal-fiber-input').value, 10) || 30)
-                    };
-                    this.storage.saveGoals(this.goals);
-                    document.getElementById('modal-goals').hidden = true;
-                    this.renderAll();
-                    this.showToast(`Objectifs enregistrés (Capital : ${this.goals.points} pts/jour).`);
-                });
-            }
-
-            switchMainTab(tabName) {
-                if (tabName !== 'scanner' && this.scanner.isRunning) {
-                    this.scanner.stop();
-                    this.resetScannerUI();
-                }
-
-                ['scanner', 'daily', 'monthly'].forEach(name => {
-                    const isSelected = name === tabName;
-                    document.getElementById(`tab-${name}`).setAttribute('aria-selected', String(isSelected));
-                    document.getElementById(`panel-${name}`).hidden = !isSelected;
-                });
-
-                if (tabName === 'daily') this.renderDailyView();
-                if (tabName === 'monthly') this.renderMonthlyView();
-            }
-
-            switchSubTab(subName) {
-                ['product', 'custom'].forEach(name => {
-                    const isSelected = name === subName;
-                    document.getElementById(`subtab-${name}`).setAttribute('aria-selected', String(isSelected));
-                    document.getElementById(`subpanel-${name}`).hidden = !isSelected;
-                });
-            }
-
-            async startCameraScan() {
-                document.getElementById('scanner-idle').hidden = true;
-                document.getElementById('scanner-video').hidden = false;
-                document.getElementById('scanner-overlay').hidden = false;
-
-                const started = await this.scanner.start();
-                if (started) {
-                    document.getElementById('camera-active-controls').hidden = false;
-                    this.updateCameraSelectUI();
-                }
-            }
-
-            updateCameraSelectUI() {
-                const devices = this.scanner.devices;
-                const switchBtn = document.getElementById('btn-switch-camera');
-                const selectEl = document.getElementById('camera-select');
-
-                if (devices.length > 1) {
-                    switchBtn.hidden = false;
-                    selectEl.hidden = false;
-                    selectEl.innerHTML = devices.map((d, idx) =>
-                        `<option value="${d.deviceId}">${this.escapeHTML(d.label || `Caméra ${idx + 1}`)}</option>`
-                    ).join('');
-                } else {
-                    switchBtn.hidden = true;
-                    selectEl.hidden = true;
-                }
-            }
-
-            resetScannerUI() {
-                document.getElementById('scanner-idle').hidden = false;
-                document.getElementById('scanner-video').hidden = true;
-                document.getElementById('scanner-overlay').hidden = true;
-                document.getElementById('camera-active-controls').hidden = true;
-            }
-
-            handleBarcodeDetected(code) {
-                this.resetScannerUI();
-                if (navigator.vibrate) navigator.vibrate(100);
-                document.getElementById('barcode-text-input').value = code;
-                this.showToast(`Code-barres détecté : ${code}`);
-                this.lookupBarcode(code);
-            }
-
-            async lookupBarcode(code) {
-                this.switchSubTab('product');
-                document.getElementById('product-empty').hidden = true;
-                document.getElementById('product-result').hidden = true;
-                document.getElementById('product-loading').hidden = false;
-
-                try {
-                    const product = await OpenFoodFactsService.fetchByBarcode(code);
-                    this.currentScannedProduct = product;
-
-                    document.getElementById('prod-img').src = product.image;
-                    document.getElementById('prod-brand').textContent = product.brand;
-                    document.getElementById('prod-name').textContent = product.name;
-                    document.getElementById('prod-code').textContent = `Code : ${product.barcode}`;
-
-                    const nsEl = document.getElementById('prod-nutriscore');
-                    nsEl.textContent = `Nutri-Score ${product.nutriscore}`;
-
-                    document.getElementById('portion-number-input').value = product.defaultPortion;
-                    document.getElementById('portion-range-input').value = Math.min(500, product.defaultPortion);
-
-                    this.refreshScannedProductDisplay();
-                    document.getElementById('product-loading').hidden = true;
-                    document.getElementById('product-result').hidden = false;
-                } catch (err) {
-                    document.getElementById('product-loading').hidden = true;
-                    document.getElementById('product-empty').hidden = false;
-                    this.showToast(err.message, 'error');
-                }
-            }
-
-            refreshScannedProductDisplay() {
-                if (!this.currentScannedProduct) return;
-                const portion = Math.max(1, parseInt(document.getElementById('portion-number-input').value, 10) || 100);
-                const scaled = PointsCalculator.scaleNutrients(this.currentScannedProduct.nutrients100g, portion);
-
-                document.getElementById('prod-points-display').textContent = scaled.points;
-                document.getElementById('val-kcal').textContent = `${Math.round(scaled.kcal)} kcal`;
-                document.getElementById('val-prot').textContent = `${scaled.proteins} g`;
-                document.getElementById('val-carb').textContent = `${scaled.carbs} g`;
-                document.getElementById('val-sugar').textContent = `${scaled.sugars} g`;
-                document.getElementById('val-fat').textContent = `${scaled.fat} g`;
-                document.getElementById('val-satfat').textContent = `${scaled.saturatedFat} g`;
-            }
-
-            updateCustomPreview() {
-                const pts = PointsCalculator.computePoints({
-                    kcal: parseFloat(document.getElementById('custom-kcal').value) || 0,
-                    proteins: parseFloat(document.getElementById('custom-prot').value) || 0,
-                    sugars: parseFloat(document.getElementById('custom-sugar').value) || 0,
-                    saturatedFat: parseFloat(document.getElementById('custom-satfat').value) || 0,
-                    fiber: parseFloat(document.getElementById('custom-fiber').value) || 0
-                });
-                document.getElementById('custom-preview-points').textContent = pts;
-            }
-
-            shiftSelectedDate(deltaDays) {
-                const [y, m, d] = this.selectedDate.split('-').map(Number);
-                const dateObj = new Date(y, m - 1, d + deltaDays);
-                this.selectedDate = this.getLocalISODate(dateObj);
-                this.selectedMonth = this.selectedDate.slice(0, 7);
-                this.syncDateInputs();
-                this.renderDailyView();
-            }
-
-            shiftSelectedMonth(deltaMonths) {
-                const [y, m] = this.selectedMonth.split('-').map(Number);
-                const dateObj = new Date(y, m - 1 + deltaMonths, 1);
-                this.selectedMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-                document.getElementById('monthly-picker').value = this.selectedMonth;
-                this.renderMonthlyView();
-            }
-
-            renderAll() {
-                document.getElementById('header-capital-badge').textContent = this.goals.points;
-
-                // Mise à jour badge d'aujourd'hui dans la barre d'onglets
-                const todayEntries = this.storage.getLogsByDate(this.todayStr);
-                const todayPts = todayEntries.reduce((sum, item) => sum + (Number(item.points) || 0), 0);
-                document.getElementById('nav-today-pts').textContent = `${todayPts} / ${this.goals.points} pts`;
-
-                this.renderDailyView();
-                this.renderMonthlyView();
-            }
-
-            renderDailyView() {
-                const entries = this.storage.getLogsByDate(this.selectedDate);
-                const [y, m, d] = this.selectedDate.split('-').map(Number);
-                const dateObj = new Date(y, m - 1, d);
-
-                const humanLabel = this.selectedDate === this.todayStr
-                    ? "Aujourd'hui"
-                    : dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-                document.getElementById('daily-human-date').textContent = humanLabel;
-
-                const totals = entries.reduce((acc, item) => {
-                    acc.points += Number(item.points) || 0;
-                    acc.kcal += Number(item.kcal) || 0;
-                    acc.proteins += Number(item.proteins) || 0;
-                    acc.carbs += Number(item.carbs) || 0;
-                    acc.fat += Number(item.fat) || 0;
-                    acc.fiber += Number(item.fiber) || 0;
-                    return acc;
-                }, { points: 0, kcal: 0, proteins: 0, carbs: 0, fat: 0, fiber: 0 });
-
-                // Jauge SVG circulaire des points
-                const budget = this.goals.points;
-                document.getElementById('daily-pts-consumed').textContent = totals.points;
-                document.getElementById('daily-pts-budget').textContent = budget;
-
-                const circumference = 2 * Math.PI * 50; // 314.16
-                const ratio = Math.min(1, totals.points / budget);
-                const offset = circumference * (1 - ratio);
-                const circle = document.getElementById('daily-gauge-circle');
-                circle.style.strokeDashoffset = offset.toFixed(2);
-
-                const remaining = budget - totals.points;
-                const statusEl = document.getElementById('daily-pts-status');
-                if (remaining >= 0) {
-                    statusEl.textContent = `${remaining} point${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`;
-                    statusEl.style.color = totals.points > budget * 0.85 ? 'var(--accent-amber)' : 'var(--brand-primary)';
-                    circle.style.stroke = totals.points > budget * 0.85 ? 'var(--accent-amber)' : 'var(--brand-primary)';
-                } else {
-                    statusEl.textContent = `Dépassement de ${Math.abs(remaining)} point${Math.abs(remaining) > 1 ? 's' : ''}`;
-                    statusEl.style.color = 'var(--accent-red)';
-                    circle.style.stroke = 'var(--accent-red)';
-                }
-
-                // Barres de progression Calories & Macros
-                document.getElementById('daily-kcal-badge').textContent = `${Math.round(totals.kcal)} / ${this.goals.kcal} kcal`;
-                this.updateMacroBar('kcal', totals.kcal, this.goals.kcal, 'kcal', true);
-                this.updateMacroBar('prot', totals.proteins, this.goals.proteins, 'g', false);
-                this.updateMacroBar('carb', totals.carbs, this.goals.carbs, 'g', false);
-                this.updateMacroBar('fat', totals.fat, this.goals.fat, 'g', false);
-                this.updateMacroBar('fiber', totals.fiber, this.goals.fiber, 'g', false);
-
-                // Liste des aliments consommés
-                document.getElementById('daily-items-count').textContent = entries.length;
-                const clearBtn = document.getElementById('btn-clear-day');
-                const container = document.getElementById('daily-entries-container');
-
-                if (entries.length === 0) {
-                    clearBtn.hidden = true;
-                    container.innerHTML = `
-                        <div class="empty-placeholder">
-                            <p style="font-weight: 700;">Aucun aliment enregistré pour cette date.</p>
-                            <p style="font-size: 1.3rem; margin-top: 0.4rem;">Utilisez l'onglet « Scanner & Ajout » pour enregistrer vos repas.</p>
-                        </div>`;
-                    return;
-                }
-
-                clearBtn.hidden = false;
-                container.innerHTML = entries.map(entry => `
-                    <article class="entry-card">
-                        <div class="entry-info">
-                            <h3 class="entry-title">${this.escapeHTML(entry.name)}</h3>
-                            <div class="entry-meta">
-                                <span><strong>${entry.portion}g</strong></span>
-                                <span>🔥 ${Math.round(entry.kcal)} kcal</span>
-                                <span>🥩 ${entry.proteins}g Prot.</span>
-                                <span>🌾 ${entry.carbs}g Gluc.</span>
-                                <span>🥑 ${entry.fat}g Lip.</span>
-                            </div>
-                        </div>
-                        <div class="entry-actions">
-                            <span class="entry-points-badge">${entry.points} pts</span>
-                            <button type="button" class="btn btn-danger btn-icon" data-delete-entry="${entry.id}" aria-label="Supprimer ${this.escapeHTML(entry.name)}">✕</button>
-                        </div>
-                    </article>
-                `).join('');
-
-                container.querySelectorAll('[data-delete-entry]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.getAttribute('data-delete-entry');
-                        this.storage.removeEntry(this.selectedDate, id);
-                        this.renderAll();
-                        this.showToast("Aliment supprimé.");
-                    });
-                });
-            }
-
-            updateMacroBar(key, current, target, unit, roundVal) {
-                const displayVal = roundVal ? Math.round(current) : +current.toFixed(1);
-                document.getElementById(`macro-${key}-text`).textContent = `${displayVal} / ${target} ${unit}`;
-                const pct = Math.min(100, Math.round((current / target) * 100));
-                document.getElementById(`macro-${key}-bar`).style.width = `${pct}%`;
-            }
-
-            renderMonthlyView() {
-                const allLogs = this.storage.getAllLogs();
-                const stats = MonthlyAnalytics.summarizeMonth(allLogs, this.selectedMonth, this.goals.points);
-
-                // Mise à jour des KPIs
-                document.getElementById('kpi-month-points').textContent = `${stats.totalPoints} pts`;
-                document.getElementById('kpi-month-avg-pts').textContent = `Moy. ${stats.avgPoints} pts / jour actif`;
-
-                document.getElementById('kpi-month-kcal').textContent = `${stats.totalKcal.toLocaleString('fr-FR')} kcal`;
-                document.getElementById('kpi-month-avg-kcal').textContent = `Moy. ${stats.avgKcal.toLocaleString('fr-FR')} kcal / jour`;
-
-                document.getElementById('kpi-month-success').textContent = `${stats.daysWithinBudget} / ${stats.activeDaysCount}`;
-                document.getElementById('kpi-month-prot').textContent = `${stats.totalProteins}g Prot.`;
-                document.getElementById('kpi-month-macros-sub').textContent = `${stats.totalCarbs}g Gluc. • ${stats.totalFat}g Lip.`;
-
-                // Construction du Calendrier Heatmap (Lundi = 0 ... Dimanche = 6)
-                const firstDayWeekday = (new Date(stats.year, stats.month - 1, 1).getDay() + 6) % 7;
-                const gridEl = document.getElementById('monthly-calendar-grid');
-                let cellsHtml = '';
-
-                for (let i = 0; i < firstDayWeekday; i++) {
-                    cellsHtml += `<div class="cal-day cal-empty" aria-hidden="true"></div>`;
-                }
-
-                stats.daysData.forEach(dayObj => {
-                    let statusClass = '';
-                    if (dayObj.hasEntries) {
-                        if (dayObj.points > this.goals.points) statusClass = 'cal-status-over';
-                        else if (dayObj.points >= this.goals.points * 0.85) statusClass = 'cal-status-warn';
-                        else statusClass = 'cal-status-ok';
-                    }
-                    const todayClass = dayObj.dateStr === this.todayStr ? 'cal-today' : '';
-                    const ptsLabel = dayObj.hasEntries ? `${dayObj.points}p` : '—';
-
-                    cellsHtml += `
-                        <button type="button" class="cal-day ${statusClass} ${todayClass}" data-cal-date="${dayObj.dateStr}" aria-label="${dayObj.dateStr} : ${dayObj.hasEntries ? `${dayObj.points} points et ${Math.round(dayObj.kcal)} kilocalories` : 'aucune saisie'}">
-                            <span class="cal-day-num">${dayObj.day}</span>
-                            <span class="cal-day-pts">${ptsLabel}</span>
-                        </button>`;
-                });
-
-                gridEl.innerHTML = cellsHtml;
-                gridEl.querySelectorAll('[data-cal-date]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        this.selectedDate = btn.getAttribute('data-cal-date');
-                        this.syncDateInputs();
-                        this.switchMainTab('daily');
-                    });
-                });
-
-                // Construction du Graphique SVG mensuel
-                this.renderMonthlySVGChart(stats);
-            }
-
-            renderMonthlySVGChart(stats) {
-                const svg = document.getElementById('monthly-bar-chart');
-                const width = 800;
-                const height = 240;
-                const padLeft = 36;
-                const padRight = 16;
-                const padTop = 20;
-                const padBottom = 30;
-                const plotW = width - padLeft - padRight;
-                const plotH = height - padTop - padBottom;
-
-                const maxDayPts = Math.max(...stats.daysData.map(d => d.points), 0);
-                const maxY = Math.max(this.goals.points * 1.25, maxDayPts * 1.1, 40);
-
-                const budgetY = padTop + plotH - ((this.goals.points / maxY) * plotH);
-                const slotW = plotW / stats.daysInMonth;
-                const barW = Math.max(8, slotW * 0.62);
-
-                let svgContent = `
-                    <!-- Ligne de base -->
-                    <line x1="${padLeft}" y1="${padTop + plotH}" x2="${width - padRight}" y2="${padTop + plotH}" stroke="var(--border-strong)" stroke-width="1.5"/>
-                    <!-- Ligne seuil Capital Journalier -->
-                    <line x1="${padLeft}" y1="${budgetY.toFixed(1)}" x2="${width - padRight}" y2="${budgetY.toFixed(1)}" stroke="var(--brand-primary)" stroke-width="2" stroke-dasharray="6 4"/>
-                    <text x="${padLeft - 6}" y="${budgetY.toFixed(1)}" text-anchor="end" dominant-baseline="middle" fill="var(--brand-primary)" font-size="11" font-weight="800">${this.goals.points}</text>
-                    <text x="${padLeft - 6}" y="${padTop + plotH}" text-anchor="end" dominant-baseline="middle" fill="var(--text-muted)" font-size="11">0</text>
-                `;
-
-                stats.daysData.forEach((d, idx) => {
-                    const xCenter = padLeft + (idx * slotW) + (slotW / 2);
-                    const barX = xCenter - (barW / 2);
-
-                    if (d.hasEntries && d.points > 0) {
-                        const barH = Math.max(4, (d.points / maxY) * plotH);
-                        const barY = padTop + plotH - barH;
-                        let fill = 'var(--brand-primary)';
-                        if (d.points > this.goals.points) fill = 'var(--accent-red)';
-                        else if (d.points >= this.goals.points * 0.85) fill = 'var(--accent-amber)';
-
-                        svgContent += `
-                            <rect x="${barX.toFixed(1)}" y="${barY.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="4" fill="${fill}">
-                                <title>Jour ${d.day} : ${d.points} pts (${Math.round(d.kcal)} kcal)</title>
-                            </rect>`;
-                    }
-
-                    if (d.day === 1 || d.day % 2 === 1) {
-                        svgContent += `<text x="${xCenter.toFixed(1)}" y="${height - 10}" text-anchor="middle" fill="var(--text-muted)" font-size="11" font-weight="700">${d.day}</text>`;
-                    }
-                });
-
-                svg.innerHTML = svgContent;
-            }
-
-            exportCSV() {
-                const allLogs = this.storage.getAllLogs();
-                const dates = Object.keys(allLogs).sort();
-                if (dates.length === 0) {
-                    this.showToast("Aucune donnée à exporter.", "warn");
-                    return;
-                }
-
-                const headers = ["Date", "Aliment", "Marque", "Portion (g)", "Points", "Calories (kcal)", "Proteines (g)", "Glucides (g)", "Sucres (g)", "Lipides (g)", "Satures (g)", "Fibres (g)"];
-                const rows = [headers.join(";")];
-
-                dates.forEach(dateStr => {
-                    allLogs[dateStr].forEach(item => {
-                        rows.push([
-                            dateStr,
-                            `"${String(item.name).replace(/"/g, '""')}"`,
-                            `"${String(item.brand || '').replace(/"/g, '""')}"`,
-                            item.portion,
-                            item.points,
-                            item.kcal,
-                            item.proteins,
-                            item.carbs,
-                            item.sugars,
-                            item.fat,
-                            item.saturatedFat,
-                            item.fiber
-                        ].join(";"));
-                    });
-                });
-
-                const blob = new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
-                this.triggerDownload(blob, `nutripoints_export_${this.todayStr}.csv`);
-                this.showToast("Export CSV téléchargé !");
-            }
-
-            exportJSON() {
-                const payload = {
-                    exportedAt: new Date().toISOString(),
-                    goals: this.goals,
-                    logs: this.storage.getAllLogs()
-                };
-                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-                this.triggerDownload(blob, `nutripoints_backup_${this.todayStr}.json`);
-                this.showToast("Sauvegarde JSON téléchargée !");
-            }
-
-            triggerDownload(blob, filename) {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            }
-
-            showToast(message, type = 'success') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast-msg ${type === 'error' ? 'toast-error' : type === 'warn' ? 'toast-warn' : ''}`;
-                toast.textContent = message;
-                container.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transition = 'opacity 250ms ease';
-                    setTimeout(() => toast.remove(), 260);
-                }, 3600);
-            }
-
-            escapeHTML(str) {
-                const div = document.createElement('div');
-                div.textContent = String(str);
-                return div.innerHTML;
-            }
-        }
-
-        // Démarrage de l'application une fois le DOM prêt
-        window.addEventListener('DOMContentLoaded', () => {
-            window.nutriApp = new NutriPointsApp();
+        /* --- UI & NAVIGATION CONTROLLER --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initNavigation();
+            initDashboard();
+            initScanner();
+            initManualCalculator();
+            initProfile();
+            initMonthly();
+            initSettingsModal();
         });
+
+        function initTheme() {
+            document.body.setAttribute('data-theme', state.theme);
+            document.body.setAttribute('data-accent', state.accent);
+            document.getElementById('select-accent').value = state.accent;
+            document.getElementById('input-firstname').value = state.firstname;
+
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                document.body.setAttribute('data-theme', state.theme);
+                state.save();
+            });
+
+            document.getElementById('btn-save-appearance').addEventListener('click', () => {
+                state.firstname = document.getElementById('input-firstname').value.trim();
+                state.accent = document.getElementById('select-accent').value;
+                document.body.setAttribute('data-accent', state.accent);
+                state.save();
+                updateDashboardUI();
+                alert('Préférences enregistrées !');
+            });
+        }
+
+        function initNavigation() {
+            const navButtons = document.querySelectorAll('.nav-item');
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    
+                    document.getElementById(targetId).classList.add('active');
+                    btn.classList.add('active');
+
+                    if (targetId === 'tab-monthly') updateMonthlyUI();
+                    if (targetId === 'tab-profile') updateProfileUI();
+                });
+            });
+
+            document.getElementById('btn-goto-scanner').addEventListener('click', () => {
+                document.querySelector('[data-target="tab-scanner"]').click();
+            });
+        }
+
+        /* --- DASHBOARD & JOURNAL --- */
+        function initDashboard() {
+            document.getElementById('prev-day').addEventListener('click', () => changeDate(-1));
+            document.getElementById('next-day').addEventListener('click', () => changeDate(1));
+            updateDashboardUI();
+        }
+
+        function changeDate(days) {
+            let d = new Date(state.currentDate);
+            d.setDate(d.getDate() + days);
+            state.currentDate = d.toISOString().split('T')[0];
+            state.save();
+            updateDashboardUI();
+        }
+
+        function updateDashboardUI() {
+            const nameDisplay = state.firstname ? `Bonjour, ${state.firstname} !` : 'Bonjour !';
+            document.getElementById('welcome-msg').textContent = nameDisplay;
+
+            const todayLabel = state.currentDate === new Date().toISOString().split('T')[0] 
+                ? "Aujourd'hui" 
+                : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('current-date-label').textContent = todayLabel;
+
+            const logs = state.getTodayLogs();
+            let totalPts = 0, totalCal = 0, totalP = 0, totalG = 0, totalL = 0, totalF = 0;
+
+            logs.forEach(item => {
+                const ratio = item.serving / 100;
+                totalPts += item.points * ratio;
+                totalCal += item.calories * ratio;
+                totalP += item.proteins * ratio;
+                totalG += item.carbs * ratio;
+                totalL += item.fats * ratio;
+                totalF += item.fibers * ratio;
+            });
+
+            totalPts = Math.round(totalPts * 10) / 10;
+            const remaining = Math.max(0, state.dailyPointsTarget - totalPts);
+
+            document.getElementById('remaining-points-val').textContent = remaining;
+            document.getElementById('budget-info').textContent = `sur ${state.dailyPointsTarget} pts`;
+            document.getElementById('total-calories-val').textContent = `${Math.round(totalCal)} kcal`;
+            document.getElementById('target-calories-info').textContent = `Objectif: ${state.dailyCaloriesTarget} kcal`;
+
+            // Macros
+            document.getElementById('macro-p-val').textContent = `${Math.round(totalP)}g`;
+            document.getElementById('macro-g-val').textContent = `${Math.round(totalG)}g`;
+            document.getElementById('macro-l-val').textContent = `${Math.round(totalL)}g`;
+            document.getElementById('macro-f-val').textContent = `${Math.round(totalF)}g`;
+
+            document.getElementById('bar-p').style.width = `${Math.min(100, (totalP / 120) * 100)}%`;
+            document.getElementById('bar-g').style.width = `${Math.min(100, (totalG / 250) * 100)}%`;
+            document.getElementById('bar-l').style.width = `${Math.min(100, (totalL / 70) * 100)}%`;
+            document.getElementById('bar-f').style.width = `${Math.min(100, (totalF / 30) * 100)}%`;
+
+            // Liste
+            const listEl = document.getElementById('daily-food-list');
+            if (logs.length === 0) {
+                listEl.innerHTML = `<li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>`;
+            } else {
+                listEl.innerHTML = logs.map((item, idx) => `
+                    <li class="food-item">
+                        <div class="food-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.serving}g • ${Math.round(item.calories * item.serving/100)} kcal</p>
+                        </div>
+                        <div class="food-actions">
+                            <span class="badge">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
+                            <button class="secondary" onclick="removeFoodItem(${idx})" style="padding:0.4rem 0.8rem; font-size:1.2rem;">✕</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        window.removeFoodItem = function(index) {
+            state.removeFood(index);
+            updateDashboardUI();
+        }
+
+        /* --- SETTINGS MODAL --- */
+        function initSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('btn-open-settings-modal').addEventListener('click', () => {
+                document.getElementById('modal-daily-points').value = state.dailyPointsTarget;
+                document.getElementById('modal-daily-calories').value = state.dailyCaloriesTarget;
+                modal.classList.add('open');
+            });
+            document.getElementById('btn-close-settings').addEventListener('click', () => modal.classList.remove('open'));
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                state.dailyPointsTarget = parseInt(document.getElementById('modal-daily-points').value) || 30;
+                state.dailyCaloriesTarget = parseInt(document.getElementById('modal-daily-calories').value) || 2000;
+                state.save();
+                modal.classList.remove('open');
+                updateDashboardUI();
+            });
+        }
+
+        /* --- SCANNER & OPEN FOOD FACTS API --- */
+        let codeReader = null;
+        let isScanning = false;
+
+        function initScanner() {
+            const videoEl = document.getElementById('scanner-video');
+            const containerEl = document.getElementById('scanner-container');
+
+            document.getElementById('btn-start-scanner').addEventListener('click', async () => {
+                containerEl.style.display = 'block';
+                document.getElementById('btn-start-scanner').style.display = 'none';
+                document.getElementById('btn-stop-scanner').style.display = 'inline-flex';
+                
+                try {
+                    codeReader = new ZXing.BrowserMultiFormatReader();
+                    isScanning = true;
+                    codeReader.decodeFromVideoDevice(null, videoEl, (result, err) => {
+                        if (result && isScanning) {
+                            stopScanner();
+                            fetchProductByBarcode(result.text);
+                        }
+                    });
+                } catch (e) {
+                    alert('Erreur d’accès à la caméra : ' + e.message);
+                    stopScanner();
+                }
+            });
+
+            document.getElementById('btn-stop-scanner').addEventListener('click', stopScanner);
+
+            document.getElementById('barcode-file-input').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new ZXing.BrowserMultiFormatReader();
+                try {
+                    const imageUrl = URL.createObjectURL(file);
+                    const result = await reader.decodeFromImageUrl(imageUrl);
+                    if (result) {
+                        fetchProductByBarcode(result.text);
+                    }
+                } catch (err) {
+                    alert('Impossible de décoder le code-barres de cette image.');
+                }
+            });
+
+            document.getElementById('btn-search-barcode').addEventListener('click', () => {
+                const code = document.getElementById('manual-barcode').value.trim();
+                if (code) fetchProductByBarcode(code);
+            });
+        }
+
+        function stopScanner() {
+            isScanning = false;
+            if (codeReader) {
+                codeReader.reset();
+            }
+            document.getElementById('scanner-container').style.display = 'none';
+            document.getElementById('btn-start-scanner').style.display = 'inline-flex';
+            document.getElementById('btn-stop-scanner').style.display = 'none';
+        }
+
+        async function fetchProductByBarcode(barcode) {
+            try {
+                const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+                const data = await res.json();
+                if (data.status === 1 && data.product) {
+                    const p = data.product;
+                    const nutriments = p.nutriments || {};
+                    
+                    document.getElementById('manual-name').value = p.product_name || 'Produit inconnu';
+                    document.getElementById('manual-calories').value = nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 150;
+                    document.getElementById('manual-proteins').value = nutriments['proteins_100g'] || 0;
+                    document.getElementById('manual-carbs').value = nutriments['carbohydrates_100g'] || 0;
+                    document.getElementById('manual-fats').value = nutriments['fat_100g'] || 0;
+                    document.getElementById('manual-fibers').value = nutriments['fiber_100g'] || 0;
+                    
+                    updateCalculatorPreview();
+                    alert(`Produit trouvé : ${p.product_name || 'Aliment'}`);
+                } else {
+                    alert('Produit non trouvé dans la base Open Food Facts.');
+                }
+            } catch (e) {
+                alert('Erreur réseau lors de la recherche du produit.');
+            }
+        }
+
+        /* --- CALCULATEUR MANUEL & PREVIEW --- */
+        function initManualCalculator() {
+            const inputs = ['manual-calories', 'manual-proteins', 'manual-carbs', 'manual-fats', 'manual-fibers', 'manual-serving'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', updateCalculatorPreview);
+            });
+
+            updateCalculatorPreview();
+
+            document.getElementById('btn-add-to-journal').addEventListener('click', () => {
+                const name = document.getElementById('manual-name').value.trim() || 'Aliment personnalisé';
+                const calories = parseFloat(document.getElementById('manual-calories').value) || 0;
+                const proteins = parseFloat(document.getElementById('manual-proteins').value) || 0;
+                const carbs = parseFloat(document.getElementById('manual-carbs').value) || 0;
+                const fats = parseFloat(document.getElementById('manual-fats').value) || 0;
+                const fibers = parseFloat(document.getElementById('manual-fibers').value) || 0;
+                const serving = parseFloat(document.getElementById('manual-serving').value) || 100;
+                
+                const points = calculatePoints(calories, proteins, carbs, fats, fibers);
+
+                state.addFood({ name, calories, proteins, carbs, fats, fibers, serving, points });
+                alert('Aliment ajouté au journal !');
+                document.querySelector('[data-target="tab-dashboard"]').click();
+                updateDashboardUI();
+            });
+        }
+
+        function updateCalculatorPreview() {
+            const calories = parseFloat(document.getElementById('manual-calories').value) || 0;
+            const proteins = parseFloat(document.getElementById('manual-proteins').value) || 0;
+            const carbs = parseFloat(document.getElementById('manual-carbs').value) || 0;
+            const fats = parseFloat(document.getElementById('manual-fats').value) || 0;
+            const fibers = parseFloat(document.getElementById('manual-fibers').value) || 0;
+            const serving = parseFloat(document.getElementById('manual-serving').value) || 100;
+
+            const pts100 = calculatePoints(calories, proteins, carbs, fats, fibers);
+            const totalPts = Math.round((pts100 * (serving / 100)) * 10) / 10;
+            document.getElementById('preview-calculated-points').textContent = `${totalPts} pts`;
+        }
+
+        /* --- PROFIL & OBJECTIFS (CALCULATEUR & POIDS) --- */
+        function initProfile() {
+            const p = state.profile;
+            document.getElementById('profile-gender').value = p.gender;
+            document.getElementById('profile-age').value = p.age;
+            document.getElementById('profile-height').value = p.height;
+            document.getElementById('profile-weight').value = p.weight;
+            document.getElementById('profile-target-weight').value = p.targetWeight;
+            document.getElementById('profile-activity').value = p.activity;
+
+            document.getElementById('btn-calculate-profile').addEventListener('click', () => {
+                state.profile = {
+                    gender: document.getElementById('profile-gender').value,
+                    age: parseInt(document.getElementById('profile-age').value) || 30,
+                    height: parseFloat(document.getElementById('profile-height').value) || 170,
+                    weight: parseFloat(document.getElementById('profile-weight').value) || 70,
+                    targetWeight: parseFloat(document.getElementById('profile-target-weight').value) || 60,
+                    activity: parseFloat(document.getElementById('profile-activity').value) || 1.2
+                };
+
+                // Formule Mifflin-St Jeor (BMR)
+                let bmr = (10 * state.profile.weight) + (6.25 * state.profile.height) - (5 * state.profile.age);
+                bmr += state.profile.gender === 'male' ? 5 : -161;
+                let tdee = Math.round(bmr * state.profile.activity);
+
+                // Si objectif perte de poids, on enlève ~500 kcal
+                let targetCal = tdee > 1500 ? tdee - 500 : tdee;
+                state.dailyCaloriesTarget = targetCal;
+                state.dailyPointsTarget = Math.round(targetCal / 65); // Estimation proportionnelle de points
+
+                state.save();
+                updateProfileUI();
+                alert(`Recommandations calculées !\n• Calories cibles : ${targetCal} kcal/jour\n• Capital points : ${state.dailyPointsTarget} pts/jour`);
+            });
+
+            document.getElementById('btn-log-weight').addEventListener('click', () => {
+                const w = parseFloat(document.getElementById('new-weight-log').value);
+                if (!w) return;
+                state.weights.push({ date: new Date().toISOString().split('T')[0], weight: w });
+                state.weights.sort((a,b) => new Date(a.date) - new Date(b.date));
+                state.save();
+                updateProfileUI();
+                document.getElementById('new-weight-log').value = '';
+            });
+
+            updateProfileUI();
+        }
+
+        function updateProfileUI() {
+            const p = state.profile;
+            const startWeight = state.weights.length > 0 ? state.weights[0].weight : p.weight;
+            const currentWeight = state.weights.length > 0 ? state.weights[state.weights.length - 1].weight : p.weight;
+            const diff = Math.round((currentWeight - startWeight) * 10) / 10;
+
+            document.getElementById('stat-start-weight').textContent = `${startWeight} kg`;
+            document.getElementById('stat-target-weight').textContent = `${p.targetWeight} kg`;
+            const diffEl = document.getElementById('stat-diff-weight');
+            diffEl.textContent = `${diff > 0 ? '+' : ''}${diff} kg`;
+            diffEl.style.color = diff <= 0 ? 'var(--primary)' : '#ef4444';
+
+            const historyEl = document.getElementById('weight-history-container');
+            if (state.weights.length === 0) {
+                historyEl.innerHTML = `<p style="color:var(--text-muted); font-size:1.3rem;">Aucune pesée enregistrée pour l'instant.</p>`;
+            } else {
+                historyEl.innerHTML = state.weights.map(w => `
+                    <div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border); font-size:1.4rem;">
+                        <span>${w.date}</span>
+                        <strong>${w.weight} kg</strong>
+                    </div>
+                `).join('');
+            }
+        }
+
+        /* --- BILAN MENSUEL --- */
+        function updateMonthlyUI() {
+            const now = new Date();
+            const yearMonth = now.toISOString().slice(0, 7); // 'YYYY-MM'
+            document.getElementById('monthly-title').textContent = `Bilan de ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+
+            let totalDays = 0;
+            let sumPts = 0;
+            let sumCal = 0;
+            const heatmapEl = document.getElementById('monthly-heatmap');
+            heatmapEl.innerHTML = '';
+
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            let heatmapHtml = '';
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = `${yearMonth}-${String(day).padStart(2, '0')}`;
+                const dayLogs = state.logs[dayStr] || [];
+                let hasData = dayLogs.length > 0;
+                if (hasData) totalDays++;
+
+                let dayCal = 0;
+                dayLogs.forEach(i => dayCal += i.calories * (i.serving/100));
+                sumCal += dayCal;
+
+                heatmapHtml += `<div class="heatmap-day ${hasData ? 'active-day' : ''}">${day}</div>`;
+            }
+            heatmapEl.innerHTML = heatmapHtml;
+
+            document.getElementById('monthly-avg-points').textContent = totalDays > 0 ? Math.round(sumPts / totalDays) : 0;
+            document.getElementById('monthly-avg-calories').textContent = totalDays > 0 ? `${Math.round(sumCal / totalDays)} kcal` : '0 kcal';
+
+            // Exports
+            document.getElementById('btn-export-json').onclick = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.logs, null, 2));
+                const dlAnchor = document.createElement('a');
+                dlAnchor.setAttribute("href", dataStr);
+                dlAnchor.setAttribute("download", "nutripoints_export.json");
+                dlAnchor.click();
+            };
+
+            document.getElementById('btn-export-csv').onclick = () => {
+                let csv = "Date,Aliment,Calories,Points,Quantite\n";
+                for (const [date, items] of Object.entries(state.logs)) {
+                    items.forEach(i => {
+                        csv += `${date},"${i.name}",${i.calories},${i.points},${i.serving}\n`;
+                    });
+                }
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const dlAnchor = document.createElement('a');
+                dlAnchor.setAttribute("href", url);
+                dlAnchor.setAttribute("download", "nutripoints_export.csv");
+                dlAnchor.click();
+            };
+        }
     </script>
 </body>
 </html>

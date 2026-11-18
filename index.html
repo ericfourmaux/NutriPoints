@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NutriPoints - Suivi Alimentaire & Points</title>
-    <!-- Bibliothèques externes via CDN (ZXing pour le décodage de code-barres de secours) -->
+    <!-- Bibliothèque ZXing pour le décodage de code-barres -->
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         :root {
@@ -16,23 +16,27 @@
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --radius: 0.8rem;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --radius: 1.2rem;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
         [data-theme="dark"] {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
+            --bg-main: #0b0f19;
+            --bg-card: #131b2e;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #334155;
-            --primary-light: rgba(16, 185, 129, 0.15);
+            --border: #1e293b;
+            --primary-light: rgba(16, 185, 129, 0.12);
         }
 
         /* Thèmes de couleur personnalisés */
         [data-accent="green"] { --primary: #10b981; --primary-hover: #059669; --primary-light: #d1fae5; }
         [data-accent="pink"]  { --primary: #ec4899; --primary-hover: #db2777; --primary-light: #fce7f3; }
         [data-accent="blue"]  { --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe; }
+
+        [data-theme="dark"][data-accent="green"] { --primary-light: rgba(16, 185, 129, 0.15); }
+        [data-theme="dark"][data-accent="pink"]  { --primary-light: rgba(236, 72, 153, 0.15); }
+        [data-theme="dark"][data-accent="blue"]  { --primary-light: rgba(59, 130, 246, 0.15); }
 
         html {
             font-size: 62.5%; /* 1rem = 10px */
@@ -51,25 +55,28 @@
             padding: 0;
             font-size: 1.6rem;
             line-height: 1.5;
+            padding-bottom: 9rem;
         }
 
         header {
             background-color: var(--bg-card);
             border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem;
+            padding: 1.6rem 2.4rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         h1 {
             font-size: 2.2rem;
             margin: 0;
             color: var(--primary);
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: -0.02em;
         }
 
         .header-controls {
@@ -82,31 +89,34 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.8rem 1.6rem;
+            padding: 1rem 1.8rem;
             border-radius: var(--radius);
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.8rem;
             text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         button:hover, .btn:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
-        button:active {
-            transform: scale(0.98);
+        button:active, .btn:active {
+            transform: translateY(0);
         }
 
         button.secondary, .btn.secondary {
             background-color: transparent;
             color: var(--text-main);
             border: 1px solid var(--border);
+            box-shadow: none;
         }
 
         button.secondary:hover {
@@ -114,9 +124,9 @@
         }
 
         main {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem 8rem 1.5rem;
+            max-width: 650px;
+            margin: 2rem auto;
+            padding: 0 1.6rem;
         }
 
         .tab-content {
@@ -125,18 +135,24 @@
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 2rem;
+            padding: 2.4rem;
             margin-bottom: 2rem;
             box-shadow: var(--shadow);
         }
 
-        /* Navigation par onglets inférieure */
+        /* Navigation inférieure élégante */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
@@ -146,13 +162,15 @@
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-around;
-            padding: 1rem 0;
+            padding: 1.2rem 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .nav-item {
             background: none;
             border: none;
+            box-shadow: none;
             color: var(--text-muted);
             font-size: 1.2rem;
             display: flex;
@@ -160,74 +178,144 @@
             align-items: center;
             gap: 0.4rem;
             cursor: pointer;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 1.2rem;
             border-radius: var(--radius);
+            font-weight: 500;
+            transition: color 0.2s;
         }
 
         .nav-item.active {
             color: var(--primary);
-            font-weight: 600;
+            font-weight: 700;
+            background: var(--primary-light);
         }
 
         .nav-item svg {
-            width: 2.2rem;
-            height: 2.2rem;
+            width: 2.4rem;
+            height: 2.4rem;
             fill: currentColor;
         }
 
-        /* Dashboard */
-        .dashboard-header {
+        /* Dashboard & Jauge Circulaire */
+        .dashboard-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .date-selector {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.2rem;
             font-weight: 600;
+            font-size: 1.5rem;
         }
 
-        .points-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-card {
+        .points-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
             background: var(--primary-light);
             border-radius: var(--radius);
-            padding: 1.5rem;
+            padding: 2.4rem;
+            margin-bottom: 2rem;
             text-align: center;
         }
 
-        .metric-card h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.4rem;
+        .circular-gauge {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circular-gauge svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .circular-gauge circle {
+            fill: none;
+            stroke-width: 10;
+        }
+
+        .circular-gauge .bg-circle {
+            stroke: var(--border);
+        }
+
+        .circular-gauge .progress-circle {
+            stroke: var(--primary);
+            stroke-dasharray: 339.29;
+            stroke-dashoffset: 80;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .gauge-inner {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .gauge-inner .number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .gauge-inner .label {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            text-align: left;
+        }
+
+        .stat-badge {
+            background: var(--bg-card);
+            padding: 1rem 1.6rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .stat-badge span {
+            display: block;
+            font-size: 1.2rem;
             color: var(--text-muted);
         }
 
-        .metric-card .value {
-            font-size: 2.8rem;
+        .stat-badge strong {
+            font-size: 1.8rem;
             font-weight: 700;
-            color: var(--primary);
         }
 
         /* Barres de progression macros */
         .macro-bars {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-top: 1.5rem;
+            gap: 1.2rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
         }
 
         .macro-item {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
+            gap: 0.5rem;
         }
 
         .macro-label {
@@ -235,6 +323,7 @@
             justify-content: space-between;
             font-size: 1.4rem;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         .progress-bar {
@@ -249,40 +338,52 @@
             height: 100%;
             background-color: var(--primary);
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.4s ease;
         }
 
         /* Formulaires & Inputs */
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.6rem;
             font-weight: 600;
             font-size: 1.4rem;
         }
 
         input, select {
             width: 100%;
-            padding: 1rem;
+            padding: 1.2rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             background-color: var(--bg-main);
             color: var(--text-main);
             font-size: 1.6rem;
+            transition: border-color 0.2s;
         }
 
         input:focus, select:focus {
-            outline: 2px solid var(--primary);
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
-        /* Scanner */
+        .row {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        /* Scanner container */
         #scanner-container {
             width: 100%;
-            max-width: 500px;
-            margin: 0 auto 1.5rem auto;
+            max-height: 320px;
+            margin-bottom: 1.6rem;
             position: relative;
             background: #000;
             border-radius: var(--radius);
@@ -290,18 +391,13 @@
             display: none;
         }
 
-        #interactive.viewport {
+        #scanner-video {
             width: 100%;
-            height: 300px;
-        }
-
-        #interactive.viewport > video {
-            width: 100%;
-            height: 100%;
+            height: 280px;
             object-fit: cover;
         }
 
-        /* Listes */
+        /* Listes d'aliments */
         .food-list {
             list-style: none;
             padding: 0;
@@ -312,7 +408,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem;
+            padding: 1.4rem;
             border-bottom: 1px solid var(--border);
         }
 
@@ -321,8 +417,9 @@
         }
 
         .food-info h4 {
-            margin: 0 0 0.3rem 0;
+            margin: 0 0 0.4rem 0;
             font-size: 1.6rem;
+            font-weight: 600;
         }
 
         .food-info p {
@@ -334,13 +431,13 @@
         .food-actions {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.2rem;
         }
 
-        .badge {
+        .badge-pts {
             background-color: var(--primary-light);
             color: var(--primary);
-            padding: 0.4rem 1rem;
+            padding: 0.6rem 1.2rem;
             border-radius: 2rem;
             font-weight: 700;
             font-size: 1.4rem;
@@ -351,26 +448,26 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 0.8rem;
-            margin-top: 1rem;
+            margin-top: 1.2rem;
         }
 
         .heatmap-day {
             aspect-ratio: 1;
             background: var(--border);
-            border-radius: 0.6rem;
+            border-radius: 0.8rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
+            font-size: 1.3rem;
+            font-weight: 500;
         }
 
         .heatmap-day.active-day {
             background: var(--primary-light);
             border: 1px solid var(--primary);
             color: var(--primary);
-            font-weight: bold;
+            font-weight: 700;
         }
 
         /* Modal */
@@ -388,6 +485,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s;
+            backdrop-filter: blur(4px);
         }
 
         .modal.open {
@@ -397,20 +495,12 @@
 
         .modal-content {
             background: var(--bg-card);
-            padding: 2.5rem;
+            padding: 2.8rem;
             border-radius: var(--radius);
             width: 90%;
-            max-width: 450px;
+            max-width: 420px;
             box-shadow: var(--shadow);
-        }
-
-        .row {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .row .form-group {
-            flex: 1;
+            border: 1px solid var(--border);
         }
     </style>
 </head>
@@ -419,36 +509,46 @@
     <header>
         <h1 id="app-title">NutriPoints</h1>
         <div class="header-controls">
-            <button class="secondary" id="btn-theme" title="Changer de thème clair/sombre">🌓</button>
+            <button class="secondary" id="btn-theme" title="Basculer Clair / Sombre" style="padding:0.8rem 1.2rem;">🌓</button>
         </div>
     </header>
 
     <main>
-        <!-- ONGLET 1 : DASHBOARD & SUIVI QUOTIDIEN -->
+        <!-- ONGLET 1 : JOURNAL & DASHBOARD -->
         <section id="tab-dashboard" class="tab-content active">
             <div class="card">
-                <div class="dashboard-header">
+                <div class="dashboard-top">
                     <div>
-                        <h2 id="welcome-msg" style="margin:0 0 0.5rem 0; font-size:2rem;">Bonjour !</h2>
+                        <h2 id="welcome-msg" style="margin:0 0 0.4rem 0; font-size:2.2rem; font-weight:800;">Bonjour !</h2>
                         <div class="date-selector">
                             <button class="secondary" id="prev-day" style="padding:0.4rem 0.8rem;">◀</button>
                             <span id="current-date-label">Aujourd'hui</span>
                             <button class="secondary" id="next-day" style="padding:0.4rem 0.8rem;">▶</button>
                         </div>
                     </div>
-                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem;">⚙️ Objectif / Capital</button>
+                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem; padding:0.8rem 1.2rem;">⚙️ Capital</button>
                 </div>
 
-                <div class="points-summary-grid">
-                    <div class="metric-card">
-                        <h3>Points Restants</h3>
-                        <div class="value" id="remaining-points-val">30</div>
-                        <span style="font-size:1.3rem; color:var(--text-muted);" id="budget-info">sur 30 pts</span>
+                <div class="points-hero">
+                    <div class="circular-gauge">
+                        <svg viewBox="0 0 120 120">
+                            <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
+                            <circle class="progress-circle" id="gauge-progress" cx="60" cy="60" r="54"></circle>
+                        </svg>
+                        <div class="gauge-inner">
+                            <span class="number" id="remaining-points-val">30</span>
+                            <span class="label">Restants</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="background:var(--border);">
-                        <h3>Calories du jour</h3>
-                        <div class="value" id="total-calories-val" style="color:var(--text-main);">0 kcal</div>
-                        <span style="font-size:1.3rem; color:var(--text-muted);" id="target-calories-info">Objectif: 2000 kcal</span>
+                    <div class="hero-stats">
+                        <div class="stat-badge">
+                            <span>Capital du jour</span>
+                            <strong id="budget-info">30 pts</strong>
+                        </div>
+                        <div class="stat-badge">
+                            <span>Calories du jour</span>
+                            <strong id="total-calories-val">0 kcal</strong>
+                        </div>
                     </div>
                 </div>
 
@@ -473,9 +573,9 @@
             </div>
 
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h3 style="margin:0;">Aliments consommés</h3>
-                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter un aliment</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.6rem;">
+                    <h3 style="margin:0; font-size:1.8rem;">Aliments consommés</h3>
+                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter</button>
                 </div>
                 <ul class="food-list" id="daily-food-list">
                     <li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>
@@ -483,40 +583,38 @@
             </div>
         </section>
 
-        <!-- ONGLET 2 : SCANNER & RECHERCHE / CALCULATEUR -->
+        <!-- ONGLET 2 : SCANNER & CALCULATEUR -->
         <section id="tab-scanner" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;">Scanner ou Rechercher un aliment</h2>
+                <h2 style="margin-top:0; font-size:1.8rem;">Scanner un code-barres</h2>
                 
                 <div id="scanner-container">
-                    <div id="interactive" class="viewport">
-                        <video id="scanner-video" playsinline muted autoplay style="width:100%; height:100%; object-fit:cover;"></video>
-                    </div>
+                    <video id="scanner-video" playsinline muted autoplay></video>
                 </div>
 
-                <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:1rem; margin-bottom:1.8rem; flex-wrap:wrap;">
                     <button id="btn-start-scanner">📷 Démarrer la caméra</button>
-                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter la caméra</button>
+                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter</button>
                     <label class="btn secondary" style="cursor:pointer; margin:0;">
-                        📁 Importer une photo code-barres
+                        📁 Importer photo
                         <input type="file" id="barcode-file-input" accept="image/*" style="display:none;">
                     </label>
                 </div>
 
-                <div class="form-group">
-                    <label for="manual-barcode">Ou saisir le code-barres (EAN/UPC)</label>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="manual-barcode">Recherche par code-barres (EAN/UPC)</label>
                     <div style="display:flex; gap:1rem;">
                         <input type="text" id="manual-barcode" placeholder="Ex: 3017620422003">
-                        <button id="btn-search-barcode">Rechercher</button>
+                        <button id="btn-search-barcode">Chercher</button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Calculateur & Saisie manuelle libre</h3>
+                <h3 style="margin-top:0; font-size:1.8rem;">Calculateur & Saisie manuelle</h3>
                 <div class="form-group">
-                    <label for="manual-name">Nom du produit / plat</label>
-                    <input type="text" id="manual-name" placeholder="Ex: Yaourt nature, Poulet grillé...">
+                    <label for="manual-name">Nom de l'aliment / plat</label>
+                    <input type="text" id="manual-name" placeholder="Ex: Poulet grillé, Yaourt nature...">
                 </div>
                 <div class="row">
                     <div class="form-group">
@@ -547,19 +645,19 @@
                     <input type="number" id="manual-serving" value="100">
                 </div>
 
-                <div style="background:var(--primary-light); padding:1.2rem; border-radius:var(--radius); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:600;">Points calculés pour cette portion :</span>
-                    <span id="preview-calculated-points" style="font-size:2rem; font-weight:700; color:var(--primary);">4 pts</span>
+                <div style="background:var(--primary-light); padding:1.4rem; border-radius:var(--radius); margin-bottom:1.8rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600;">Points pour cette portion :</span>
+                    <span id="preview-calculated-points" style="font-size:2.2rem; font-weight:800; color:var(--primary);">4 pts</span>
                 </div>
 
-                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal du jour</button>
+                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal</button>
             </div>
         </section>
 
-        <!-- ONGLET 3 : PROFIL & OBJECTIFS (CALCULATEUR & POIDS) -->
+        <!-- ONGLET 3 : PROFIL & OBJECTIFS -->
         <section id="tab-profile" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;">Personnalisation & Apparence</h2>
+                <h2 style="margin-top:0; font-size:1.8rem;">Préférences & Apparence</h2>
                 <div class="form-group">
                     <label for="input-firstname">Votre Prénom</label>
                     <input type="text" id="input-firstname" placeholder="Ex: Thomas, Julie...">
@@ -576,8 +674,8 @@
             </div>
 
             <div class="card">
-                <h2 style="margin-top:0;">Calculateur de Profil & Objectifs</h2>
-                <p style="color:var(--text-muted); font-size:1.4rem;">Calculez automatiquement votre capital de points et vos besoins caloriques selon vos caractéristiques physiques (formule Mifflin-St Jeor).</p>
+                <h2 style="margin-top:0; font-size:1.8rem;">Calculateur de Recommandations</h2>
+                <p style="color:var(--text-muted); font-size:1.4rem; margin-bottom:1.6rem;">Calcul automatique de votre capital selon la formule Mifflin-St Jeor.</p>
                 
                 <div class="row">
                     <div class="form-group">
@@ -605,66 +703,62 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-target-weight">Poids idéal recherché (Cible en kg)</label>
+                    <label for="profile-target-weight">Poids cible (kg)</label>
                     <input type="number" id="profile-target-weight" value="70">
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-activity">Niveau d'activité physique</label>
+                    <label for="profile-activity">Niveau d'activité</label>
                     <select id="profile-activity">
-                        <option value="1.2">Sédentaire (peu ou pas d'exercice)</option>
-                        <option value="1.375">Légèrement actif (exercice léger 1-3j/sem)</option>
-                        <option value="1.55" selected>Modérément actif (exercice modéré 3-5j/sem)</option>
-                        <option value="1.725">Très actif (exercice intense 6-7j/sem)</option>
+                        <option value="1.2">Sédentaire</option>
+                        <option value="1.375">Légèrement actif</option>
+                        <option value="1.55" selected>Modérément actif</option>
+                        <option value="1.725">Très actif</option>
                     </select>
                 </div>
 
-                <button id="btn-calculate-profile" style="width:100%;">Calculer mes recommandations & Objectif</button>
+                <button id="btn-calculate-profile" style="width:100%;">Calculer mes objectifs</button>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Suivi de l'évolution du poids</h3>
-                <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; font-size:1.5rem;">
-                    <div>Poids de départ : <strong id="stat-start-weight">80 kg</strong></div>
+                <h3 style="margin-top:0; font-size:1.8rem;">Suivi de l'évolution du poids</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:1.6rem; font-size:1.4rem;">
+                    <div>Départ : <strong id="stat-start-weight">80 kg</strong></div>
                     <div>Cible : <strong id="stat-target-weight">70 kg</strong></div>
                     <div>Perte : <strong id="stat-diff-weight" style="color:var(--primary);">0 kg</strong></div>
                 </div>
                 <div class="form-group">
-                    <label for="new-weight-log">Enregistrer une pesée aujourd'hui (kg)</label>
+                    <label for="new-weight-log">Enregistrer une pesée (kg)</label>
                     <div style="display:flex; gap:1rem;">
                         <input type="number" step="0.1" id="new-weight-log" placeholder="Ex: 79.2">
                         <button id="btn-log-weight">Ajouter</button>
                     </div>
                 </div>
-                <div id="weight-history-container" style="margin-top:1.5rem;">
-                    <!-- Historique des pesées -->
-                </div>
+                <div id="weight-history-container" style="margin-top:1.6rem;"></div>
             </div>
         </section>
 
         <!-- ONGLET 4 : BILAN MENSUEL -->
         <section id="tab-monthly" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0;" id="monthly-title">Bilan du mois</h2>
-                <div class="points-summary-grid">
-                    <div class="metric-card">
-                        <h3>Moyenne Points / jour</h3>
-                        <div class="value" id="monthly-avg-points">0</div>
+                <h2 style="margin-top:0; font-size:1.8rem;" id="monthly-title">Bilan du mois</h2>
+                <div class="points-hero" style="background:var(--border);">
+                    <div style="text-align:center; flex:1;">
+                        <span style="font-size:1.3rem; color:var(--text-muted);">Moyenne points / jour</span>
+                        <div style="font-size:2.6rem; font-weight:800; color:var(--primary);" id="monthly-avg-points">0</div>
                     </div>
-                    <div class="metric-card" style="background:var(--border);">
-                        <h3>Moyenne Calories / jour</h3>
-                        <div class="value" id="monthly-avg-calories" style="color:var(--text-main);">0 kcal</div>
+                    <div style="text-align:center; flex:1; border-left:1px solid var(--border);">
+                        <span style="font-size:1.3rem; color:var(--text-muted);">Moyenne calories / jour</span>
+                        <div style="font-size:2.6rem; font-weight:800;" id="monthly-avg-calories">0 kcal</div>
                     </div>
                 </div>
 
-                <h3 style="margin-top:2rem;">Calendrier d'activité du mois</h3>
-                <div class="heatmap-grid" id="monthly-heatmap">
-                    <!-- Généré dynamiquement -->
-                </div>
+                <h3 style="margin-top:2rem; font-size:1.6rem;">Calendrier d'activité</h3>
+                <div class="heatmap-grid" id="monthly-heatmap"></div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">Export des données</h3>
+                <h3 style="margin-top:0; font-size:1.8rem;">Export des données</h3>
                 <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                     <button class="secondary" id="btn-export-json">Exporter en JSON</button>
                     <button class="secondary" id="btn-export-csv">Exporter en CSV</button>
@@ -693,16 +787,16 @@
         </button>
     </nav>
 
-    <!-- MODAL PARAMÈTRES / CAPITAL JOURNALIER -->
+    <!-- MODAL PARAMÈTRES / CAPITAL -->
     <div class="modal" id="settings-modal">
         <div class="modal-content">
-            <h3 style="margin-top:0;">Modifier le Capital Journalier</h3>
+            <h3 style="margin-top:0; font-size:1.8rem;">Modifier le Capital</h3>
             <div class="form-group">
-                <label for="modal-daily-points">Points maximum / jour</label>
+                <label for="modal-daily-points">Points max / jour</label>
                 <input type="number" id="modal-daily-points" value="30" min="10" max="200">
             </div>
             <div class="form-group">
-                <label for="modal-daily-calories">Objectif calories / jour (kcal)</label>
+                <label for="modal-daily-calories">Calories max / jour (kcal)</label>
                 <input type="number" id="modal-daily-calories" value="2000" min="500" max="5000">
             </div>
             <div style="display:flex; justify-content:flex-end; gap:1rem;">
@@ -713,12 +807,8 @@
     </div>
 
     <script>
-        /* --- APPLICATION STATE & SERVICES --- */
         class AppState {
-            constructor() {
-                this.load();
-            }
-
+            constructor() { this.load(); }
             load() {
                 const data = JSON.parse(localStorage.getItem('nutripoints_state') || '{}');
                 this.firstname = data.firstname || '';
@@ -727,37 +817,23 @@
                 this.dailyPointsTarget = data.dailyPointsTarget || 30;
                 this.dailyCaloriesTarget = data.dailyCaloriesTarget || 2000;
                 this.currentDate = data.currentDate || new Date().toISOString().split('T')[0];
-                this.logs = data.logs || {}; // { 'YYYY-MM-DD': [ {name, calories, p, g, l, f, points, serving} ] }
-                this.weights = data.weights || []; // [ {date, weight} ]
+                this.logs = data.logs || {};
+                this.weights = data.weights || [];
                 this.profile = data.profile || { gender: 'male', age: 45, height: 175, weight: 80, targetWeight: 70, activity: 1.55 };
             }
-
             save() {
                 localStorage.setItem('nutripoints_state', JSON.stringify({
-                    firstname: this.firstname,
-                    accent: this.accent,
-                    theme: this.theme,
-                    dailyPointsTarget: this.dailyPointsTarget,
-                    dailyCaloriesTarget: this.dailyCaloriesTarget,
-                    currentDate: this.currentDate,
-                    logs: this.logs,
-                    weights: this.weights,
-                    profile: this.profile
+                    firstname: this.firstname, accent: this.accent, theme: this.theme,
+                    dailyPointsTarget: this.dailyPointsTarget, dailyCaloriesTarget: this.dailyCaloriesTarget,
+                    currentDate: this.currentDate, logs: this.logs, weights: this.weights, profile: this.profile
                 }));
             }
-
-            getTodayLogs() {
-                return this.logs[this.currentDate] || [];
-            }
-
+            getTodayLogs() { return this.logs[this.currentDate] || []; }
             addFood(item) {
-                if (!this.logs[this.currentDate]) {
-                    this.logs[this.currentDate] = [];
-                }
+                if (!this.logs[this.currentDate]) this.logs[this.currentDate] = [];
                 this.logs[this.currentDate].push(item);
                 this.save();
             }
-
             removeFood(index) {
                 if (this.logs[this.currentDate]) {
                     this.logs[this.currentDate].splice(index, 1);
@@ -768,14 +844,11 @@
 
         const state = new AppState();
 
-        /* --- CALCULATEUR DE POINTS & MACROS --- */
         function calculatePoints(calories, proteins, carbs, fats, fibers) {
-            // Algorithme inspiré de l'indice nutritionnel (Protéines & Fibres réduisent les points, Graisses & Calories les augmentent)
             let pts = (calories / 50) + (fats / 3.5) - (fibers / 4) - (proteins / 10);
             return Math.max(0, Math.round(pts * 10) / 10);
         }
 
-        /* --- UI & NAVIGATION CONTROLLER --- */
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initNavigation();
@@ -810,13 +883,11 @@
         }
 
         function initNavigation() {
-            const navButtons = document.querySelectorAll('.nav-item');
-            navButtons.forEach(btn => {
+            document.querySelectorAll('.nav-item').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const targetId = btn.getAttribute('data-target');
                     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                    
                     document.getElementById(targetId).classList.add('active');
                     btn.classList.add('active');
 
@@ -830,7 +901,6 @@
             });
         }
 
-        /* --- DASHBOARD & JOURNAL --- */
         function initDashboard() {
             document.getElementById('prev-day').addEventListener('click', () => changeDate(-1));
             document.getElementById('next-day').addEventListener('click', () => changeDate(1));
@@ -846,12 +916,11 @@
         }
 
         function updateDashboardUI() {
-            const nameDisplay = state.firstname ? `Bonjour, ${state.firstname} !` : 'Bonjour !';
-            document.getElementById('welcome-msg').textContent = nameDisplay;
-
+            document.getElementById('welcome-msg').textContent = state.firstname ? `Bonjour, ${state.firstname} !` : 'Bonjour !';
+            
             const todayLabel = state.currentDate === new Date().toISOString().split('T')[0] 
                 ? "Aujourd'hui" 
-                : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', month: 'short', day: 'numeric' });
             document.getElementById('current-date-label').textContent = todayLabel;
 
             const logs = state.getTodayLogs();
@@ -871,9 +940,13 @@
             const remaining = Math.max(0, state.dailyPointsTarget - totalPts);
 
             document.getElementById('remaining-points-val').textContent = remaining;
-            document.getElementById('budget-info').textContent = `sur ${state.dailyPointsTarget} pts`;
+            document.getElementById('budget-info').textContent = `${state.dailyPointsTarget} pts`;
             document.getElementById('total-calories-val').textContent = `${Math.round(totalCal)} kcal`;
-            document.getElementById('target-calories-info').textContent = `Objectif: ${state.dailyCaloriesTarget} kcal`;
+
+            // Jauge circulaire
+            const circumference = 339.29;
+            const progress = Math.min(1, totalPts / state.dailyPointsTarget);
+            document.getElementById('gauge-progress').style.strokeDashoffset = circumference - (progress * circumference);
 
             // Macros
             document.getElementById('macro-p-val').textContent = `${Math.round(totalP)}g`;
@@ -886,7 +959,6 @@
             document.getElementById('bar-l').style.width = `${Math.min(100, (totalL / 70) * 100)}%`;
             document.getElementById('bar-f').style.width = `${Math.min(100, (totalF / 30) * 100)}%`;
 
-            // Liste
             const listEl = document.getElementById('daily-food-list');
             if (logs.length === 0) {
                 listEl.innerHTML = `<li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>`;
@@ -898,7 +970,7 @@
                             <p>${item.serving}g • ${Math.round(item.calories * item.serving/100)} kcal</p>
                         </div>
                         <div class="food-actions">
-                            <span class="badge">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
+                            <span class="badge-pts">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
                             <button class="secondary" onclick="removeFoodItem(${idx})" style="padding:0.4rem 0.8rem; font-size:1.2rem;">✕</button>
                         </div>
                     </li>
@@ -911,7 +983,6 @@
             updateDashboardUI();
         }
 
-        /* --- SETTINGS MODAL --- */
         function initSettingsModal() {
             const modal = document.getElementById('settings-modal');
             document.getElementById('btn-open-settings-modal').addEventListener('click', () => {
@@ -929,7 +1000,6 @@
             });
         }
 
-        /* --- SCANNER & OPEN FOOD FACTS API --- */
         let codeReader = null;
         let isScanning = false;
 
@@ -952,7 +1022,7 @@
                         }
                     });
                 } catch (e) {
-                    alert('Erreur d’accès à la caméra : ' + e.message);
+                    alert('Erreur caméra : ' + e.message);
                     stopScanner();
                 }
             });
@@ -964,13 +1034,10 @@
                 if (!file) return;
                 const reader = new ZXing.BrowserMultiFormatReader();
                 try {
-                    const imageUrl = URL.createObjectURL(file);
-                    const result = await reader.decodeFromImageUrl(imageUrl);
-                    if (result) {
-                        fetchProductByBarcode(result.text);
-                    }
+                    const result = await reader.decodeFromImageUrl(URL.createObjectURL(file));
+                    if (result) fetchProductByBarcode(result.text);
                 } catch (err) {
-                    alert('Impossible de décoder le code-barres de cette image.');
+                    alert('Impossible de décoder l’image.');
                 }
             });
 
@@ -982,9 +1049,7 @@
 
         function stopScanner() {
             isScanning = false;
-            if (codeReader) {
-                codeReader.reset();
-            }
+            if (codeReader) codeReader.reset();
             document.getElementById('scanner-container').style.display = 'none';
             document.getElementById('btn-start-scanner').style.display = 'inline-flex';
             document.getElementById('btn-stop-scanner').style.display = 'none';
@@ -997,46 +1062,40 @@
                 if (data.status === 1 && data.product) {
                     const p = data.product;
                     const nutriments = p.nutriments || {};
-                    
                     document.getElementById('manual-name').value = p.product_name || 'Produit inconnu';
-                    document.getElementById('manual-calories').value = nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 150;
+                    document.getElementById('manual-calories').value = nutriments['energy-kcal_100g'] || 150;
                     document.getElementById('manual-proteins').value = nutriments['proteins_100g'] || 0;
                     document.getElementById('manual-carbs').value = nutriments['carbohydrates_100g'] || 0;
                     document.getElementById('manual-fats').value = nutriments['fat_100g'] || 0;
                     document.getElementById('manual-fibers').value = nutriments['fiber_100g'] || 0;
-                    
                     updateCalculatorPreview();
-                    alert(`Produit trouvé : ${p.product_name || 'Aliment'}`);
+                    alert(`Trouvé : ${p.product_name || 'Aliment'}`);
                 } else {
-                    alert('Produit non trouvé dans la base Open Food Facts.');
+                    alert('Produit non trouvé.');
                 }
             } catch (e) {
-                alert('Erreur réseau lors de la recherche du produit.');
+                alert('Erreur réseau.');
             }
         }
 
-        /* --- CALCULATEUR MANUEL & PREVIEW --- */
         function initManualCalculator() {
-            const inputs = ['manual-calories', 'manual-proteins', 'manual-carbs', 'manual-fats', 'manual-fibers', 'manual-serving'];
-            inputs.forEach(id => {
+            ['manual-calories', 'manual-proteins', 'manual-carbs', 'manual-fats', 'manual-fibers', 'manual-serving'].forEach(id => {
                 document.getElementById(id).addEventListener('input', updateCalculatorPreview);
             });
-
             updateCalculatorPreview();
 
             document.getElementById('btn-add-to-journal').addEventListener('click', () => {
-                const name = document.getElementById('manual-name').value.trim() || 'Aliment personnalisé';
+                const name = document.getElementById('manual-name').value.trim() || 'Aliment';
                 const calories = parseFloat(document.getElementById('manual-calories').value) || 0;
                 const proteins = parseFloat(document.getElementById('manual-proteins').value) || 0;
                 const carbs = parseFloat(document.getElementById('manual-carbs').value) || 0;
                 const fats = parseFloat(document.getElementById('manual-fats').value) || 0;
                 const fibers = parseFloat(document.getElementById('manual-fibers').value) || 0;
                 const serving = parseFloat(document.getElementById('manual-serving').value) || 100;
-                
                 const points = calculatePoints(calories, proteins, carbs, fats, fibers);
 
                 state.addFood({ name, calories, proteins, carbs, fats, fibers, serving, points });
-                alert('Aliment ajouté au journal !');
+                alert('Ajouté au journal !');
                 document.querySelector('[data-target="tab-dashboard"]').click();
                 updateDashboardUI();
             });
@@ -1049,13 +1108,10 @@
             const fats = parseFloat(document.getElementById('manual-fats').value) || 0;
             const fibers = parseFloat(document.getElementById('manual-fibers').value) || 0;
             const serving = parseFloat(document.getElementById('manual-serving').value) || 100;
-
-            const pts100 = calculatePoints(calories, proteins, carbs, fats, fibers);
-            const totalPts = Math.round((pts100 * (serving / 100)) * 10) / 10;
+            const totalPts = Math.round((calculatePoints(calories, proteins, carbs, fats, fibers) * (serving / 100)) * 10) / 10;
             document.getElementById('preview-calculated-points').textContent = `${totalPts} pts`;
         }
 
-        /* --- PROFIL & OBJECTIFS (CALCULATEUR & POIDS) --- */
         function initProfile() {
             const p = state.profile;
             document.getElementById('profile-gender').value = p.gender;
@@ -1074,20 +1130,15 @@
                     targetWeight: parseFloat(document.getElementById('profile-target-weight').value) || 60,
                     activity: parseFloat(document.getElementById('profile-activity').value) || 1.2
                 };
-
-                // Formule Mifflin-St Jeor (BMR)
                 let bmr = (10 * state.profile.weight) + (6.25 * state.profile.height) - (5 * state.profile.age);
                 bmr += state.profile.gender === 'male' ? 5 : -161;
                 let tdee = Math.round(bmr * state.profile.activity);
-
-                // Si objectif perte de poids, on enlève ~500 kcal
                 let targetCal = tdee > 1500 ? tdee - 500 : tdee;
                 state.dailyCaloriesTarget = targetCal;
-                state.dailyPointsTarget = Math.round(targetCal / 65); // Estimation proportionnelle de points
-
+                state.dailyPointsTarget = Math.round(targetCal / 65);
                 state.save();
                 updateProfileUI();
-                alert(`Recommandations calculées !\n• Calories cibles : ${targetCal} kcal/jour\n• Capital points : ${state.dailyPointsTarget} pts/jour`);
+                alert(`Objectifs mis à jour !\n• Calories : ${targetCal} kcal\n• Points : ${state.dailyPointsTarget} pts`);
             });
 
             document.getElementById('btn-log-weight').addEventListener('click', () => {
@@ -1116,43 +1167,28 @@
             diffEl.style.color = diff <= 0 ? 'var(--primary)' : '#ef4444';
 
             const historyEl = document.getElementById('weight-history-container');
-            if (state.weights.length === 0) {
-                historyEl.innerHTML = `<p style="color:var(--text-muted); font-size:1.3rem;">Aucune pesée enregistrée pour l'instant.</p>`;
-            } else {
-                historyEl.innerHTML = state.weights.map(w => `
-                    <div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border); font-size:1.4rem;">
-                        <span>${w.date}</span>
-                        <strong>${w.weight} kg</strong>
-                    </div>
-                `).join('');
-            }
+            historyEl.innerHTML = state.weights.length === 0 ? `<p style="color:var(--text-muted); font-size:1.3rem;">Aucune pesée enregistrée.</p>` :
+                state.weights.map(w => `<div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border); font-size:1.4rem;"><span>${w.date}</span><strong>${w.weight} kg</strong></div>`).join('');
         }
 
-        /* --- BILAN MENSUEL --- */
         function updateMonthlyUI() {
             const now = new Date();
-            const yearMonth = now.toISOString().slice(0, 7); // 'YYYY-MM'
+            const yearMonth = now.toISOString().slice(0, 7);
             document.getElementById('monthly-title').textContent = `Bilan de ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
 
-            let totalDays = 0;
-            let sumPts = 0;
-            let sumCal = 0;
+            let totalDays = 0, sumPts = 0, sumCal = 0;
             const heatmapEl = document.getElementById('monthly-heatmap');
-            heatmapEl.innerHTML = '';
-
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
             let heatmapHtml = '';
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = `${yearMonth}-${String(day).padStart(2, '0')}`;
                 const dayLogs = state.logs[dayStr] || [];
-                let hasData = dayLogs.length > 0;
+                const hasData = dayLogs.length > 0;
                 if (hasData) totalDays++;
-
                 let dayCal = 0;
                 dayLogs.forEach(i => dayCal += i.calories * (i.serving/100));
                 sumCal += dayCal;
-
                 heatmapHtml += `<div class="heatmap-day ${hasData ? 'active-day' : ''}">${day}</div>`;
             }
             heatmapEl.innerHTML = heatmapHtml;
@@ -1160,28 +1196,22 @@
             document.getElementById('monthly-avg-points').textContent = totalDays > 0 ? Math.round(sumPts / totalDays) : 0;
             document.getElementById('monthly-avg-calories').textContent = totalDays > 0 ? `${Math.round(sumCal / totalDays)} kcal` : '0 kcal';
 
-            // Exports
             document.getElementById('btn-export-json').onclick = () => {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.logs, null, 2));
-                const dlAnchor = document.createElement('a');
-                dlAnchor.setAttribute("href", dataStr);
-                dlAnchor.setAttribute("download", "nutripoints_export.json");
-                dlAnchor.click();
+                const blob = new Blob([JSON.stringify(state.logs, null, 2)], { type: 'text/json;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const dl = document.createElement('a');
+                dl.href = url; dl.download = "nutripoints_export.json"; dl.click();
             };
 
             document.getElementById('btn-export-csv').onclick = () => {
                 let csv = "Date,Aliment,Calories,Points,Quantite\n";
                 for (const [date, items] of Object.entries(state.logs)) {
-                    items.forEach(i => {
-                        csv += `${date},"${i.name}",${i.calories},${i.points},${i.serving}\n`;
-                    });
+                    items.forEach(i => { csv += `${date},"${i.name}",${i.calories},${i.points},${i.serving}\n`; });
                 }
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const dlAnchor = document.createElement('a');
-                dlAnchor.setAttribute("href", url);
-                dlAnchor.setAttribute("download", "nutripoints_export.csv");
-                dlAnchor.click();
+                const dl = document.createElement('a');
+                dl.href = url; dl.download = "nutripoints_export.csv"; dl.click();
             };
         }
     </script>

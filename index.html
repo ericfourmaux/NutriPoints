@@ -16,17 +16,17 @@
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --radius: 1.2rem;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+            --radius: 0.8rem;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
 
         [data-theme="dark"] {
-            --bg-main: #0b0f19;
-            --bg-card: #131b2e;
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #1e293b;
-            --primary-light: rgba(16, 185, 129, 0.12);
+            --border: #334155;
+            --primary-light: rgba(16, 185, 129, 0.15);
         }
 
         /* Thèmes de couleur personnalisés */
@@ -34,7 +34,6 @@
         [data-accent="pink"]  { --primary: #ec4899; --primary-hover: #db2777; --primary-light: #fce7f3; }
         [data-accent="blue"]  { --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe; }
 
-        [data-theme="dark"][data-accent="green"] { --primary-light: rgba(16, 185, 129, 0.15); }
         [data-theme="dark"][data-accent="pink"]  { --primary-light: rgba(236, 72, 153, 0.15); }
         [data-theme="dark"][data-accent="blue"]  { --primary-light: rgba(59, 130, 246, 0.15); }
 
@@ -55,28 +54,25 @@
             padding: 0;
             font-size: 1.6rem;
             line-height: 1.5;
-            padding-bottom: 9rem;
         }
 
         header {
             background-color: var(--bg-card);
             border-bottom: 1px solid var(--border);
-            padding: 1.6rem 2.4rem;
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         h1 {
             font-size: 2.2rem;
             margin: 0;
             color: var(--primary);
-            font-weight: 800;
-            letter-spacing: -0.02em;
+            font-weight: 700;
         }
 
         .header-controls {
@@ -89,34 +85,31 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 1rem 1.8rem;
+            padding: 0.8rem 1.6rem;
             border-radius: var(--radius);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.2s, transform 0.1s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.8rem;
             text-decoration: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         button:hover, .btn:hover {
             background-color: var(--primary-hover);
-            transform: translateY(-1px);
         }
 
-        button:active, .btn:active {
-            transform: translateY(0);
+        button:active {
+            transform: scale(0.98);
         }
 
         button.secondary, .btn.secondary {
             background-color: transparent;
             color: var(--text-main);
             border: 1px solid var(--border);
-            box-shadow: none;
         }
 
         button.secondary:hover {
@@ -124,9 +117,9 @@
         }
 
         main {
-            max-width: 650px;
-            margin: 2rem auto;
-            padding: 0 1.6rem;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 8rem 1.5rem;
         }
 
         .tab-content {
@@ -135,24 +128,18 @@
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.2s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 2.4rem;
+            padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: var(--shadow);
         }
 
-        /* Navigation inférieure élégante */
+        /* Navigation par onglets inférieure */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
@@ -162,15 +149,13 @@
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-around;
-            padding: 1.2rem 0;
+            padding: 1rem 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
         }
 
         .nav-item {
             background: none;
             border: none;
-            box-shadow: none;
             color: var(--text-muted);
             font-size: 1.2rem;
             display: flex;
@@ -178,144 +163,74 @@
             align-items: center;
             gap: 0.4rem;
             cursor: pointer;
-            padding: 0.4rem 1.2rem;
+            padding: 0.5rem 1rem;
             border-radius: var(--radius);
-            font-weight: 500;
-            transition: color 0.2s;
         }
 
         .nav-item.active {
             color: var(--primary);
-            font-weight: 700;
-            background: var(--primary-light);
+            font-weight: 600;
         }
 
         .nav-item svg {
-            width: 2.4rem;
-            height: 2.4rem;
+            width: 2.2rem;
+            height: 2.2rem;
             fill: currentColor;
         }
 
-        /* Dashboard & Jauge Circulaire */
-        .dashboard-top {
+        /* Dashboard */
+        .dashboard-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .date-selector {
             display: flex;
             align-items: center;
-            gap: 1.2rem;
+            gap: 1rem;
             font-weight: 600;
-            font-size: 1.5rem;
         }
 
-        .points-hero {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
+        .points-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
             background: var(--primary-light);
             border-radius: var(--radius);
-            padding: 2.4rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
             text-align: center;
         }
 
-        .circular-gauge {
-            position: relative;
-            width: 130px;
-            height: 130px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .circular-gauge svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-
-        .circular-gauge circle {
-            fill: none;
-            stroke-width: 10;
-        }
-
-        .circular-gauge .bg-circle {
-            stroke: var(--border);
-        }
-
-        .circular-gauge .progress-circle {
-            stroke: var(--primary);
-            stroke-dasharray: 339.29;
-            stroke-dashoffset: 80;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .gauge-inner {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .gauge-inner .number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary);
-            line-height: 1;
-        }
-
-        .gauge-inner .label {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 0.2rem;
-        }
-
-        .hero-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            text-align: left;
-        }
-
-        .stat-badge {
-            background: var(--bg-card);
-            padding: 1rem 1.6rem;
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-        }
-
-        .stat-badge span {
-            display: block;
-            font-size: 1.2rem;
+        .metric-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.4rem;
             color: var(--text-muted);
         }
 
-        .stat-badge strong {
-            font-size: 1.8rem;
+        .metric-card .value {
+            font-size: 2.8rem;
             font-weight: 700;
+            color: var(--primary);
         }
 
         /* Barres de progression macros */
         .macro-bars {
             display: flex;
             flex-direction: column;
-            gap: 1.2rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
 
         .macro-item {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .macro-label {
@@ -323,7 +238,6 @@
             justify-content: space-between;
             font-size: 1.4rem;
             color: var(--text-muted);
-            font-weight: 500;
         }
 
         .progress-bar {
@@ -338,52 +252,40 @@
             height: 100%;
             background-color: var(--primary);
             width: 0%;
-            transition: width 0.4s ease;
+            transition: width 0.3s ease;
         }
 
         /* Formulaires & Inputs */
         .form-group {
-            margin-bottom: 1.8rem;
+            margin-bottom: 1.5rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.5rem;
             font-weight: 600;
             font-size: 1.4rem;
         }
 
         input, select {
             width: 100%;
-            padding: 1.2rem;
+            padding: 1rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             background-color: var(--bg-main);
             color: var(--text-main);
             font-size: 1.6rem;
-            transition: border-color 0.2s;
         }
 
         input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+            outline: 2px solid var(--primary);
         }
 
-        .row {
-            display: flex;
-            gap: 1.2rem;
-        }
-
-        .row .form-group {
-            flex: 1;
-        }
-
-        /* Scanner container */
+        /* Scanner */
         #scanner-container {
             width: 100%;
-            max-height: 320px;
-            margin-bottom: 1.6rem;
+            max-width: 500px;
+            margin: 0 auto 1.5rem auto;
             position: relative;
             background: #000;
             border-radius: var(--radius);
@@ -397,7 +299,7 @@
             object-fit: cover;
         }
 
-        /* Listes d'aliments */
+        /* Listes */
         .food-list {
             list-style: none;
             padding: 0;
@@ -408,7 +310,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.4rem;
+            padding: 1.2rem;
             border-bottom: 1px solid var(--border);
         }
 
@@ -417,9 +319,8 @@
         }
 
         .food-info h4 {
-            margin: 0 0 0.4rem 0;
+            margin: 0 0 0.3rem 0;
             font-size: 1.6rem;
-            font-weight: 600;
         }
 
         .food-info p {
@@ -431,13 +332,13 @@
         .food-actions {
             display: flex;
             align-items: center;
-            gap: 1.2rem;
+            gap: 1rem;
         }
 
-        .badge-pts {
+        .badge {
             background-color: var(--primary-light);
             color: var(--primary);
-            padding: 0.6rem 1.2rem;
+            padding: 0.4rem 1rem;
             border-radius: 2rem;
             font-weight: 700;
             font-size: 1.4rem;
@@ -448,26 +349,25 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 0.8rem;
-            margin-top: 1.2rem;
+            margin-top: 1rem;
         }
 
         .heatmap-day {
             aspect-ratio: 1;
             background: var(--border);
-            border-radius: 0.8rem;
+            border-radius: 0.6rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
-            font-weight: 500;
+            font-size: 1.2rem;
         }
 
         .heatmap-day.active-day {
             background: var(--primary-light);
             border: 1px solid var(--primary);
             color: var(--primary);
-            font-weight: 700;
+            font-weight: bold;
         }
 
         /* Modal */
@@ -485,7 +385,6 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s;
-            backdrop-filter: blur(4px);
         }
 
         .modal.open {
@@ -495,12 +394,20 @@
 
         .modal-content {
             background: var(--bg-card);
-            padding: 2.8rem;
+            padding: 2.5rem;
             border-radius: var(--radius);
             width: 90%;
-            max-width: 420px;
+            max-width: 450px;
             box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+        }
+
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .row .form-group {
+            flex: 1;
         }
     </style>
 </head>
@@ -509,46 +416,36 @@
     <header>
         <h1 id="app-title">NutriPoints</h1>
         <div class="header-controls">
-            <button class="secondary" id="btn-theme" title="Basculer Clair / Sombre" style="padding:0.8rem 1.2rem;">🌓</button>
+            <button class="secondary" id="btn-theme" title="Changer de thème clair/sombre">🌓</button>
         </div>
     </header>
 
     <main>
-        <!-- ONGLET 1 : JOURNAL & DASHBOARD -->
+        <!-- ONGLET 1 : DASHBOARD & SUIVI QUOTIDIEN -->
         <section id="tab-dashboard" class="tab-content active">
             <div class="card">
-                <div class="dashboard-top">
+                <div class="dashboard-header">
                     <div>
-                        <h2 id="welcome-msg" style="margin:0 0 0.4rem 0; font-size:2.2rem; font-weight:800;">Bonjour !</h2>
+                        <h2 id="welcome-msg" style="margin:0 0 0.5rem 0; font-size:2rem;">Bonjour !</h2>
                         <div class="date-selector">
                             <button class="secondary" id="prev-day" style="padding:0.4rem 0.8rem;">◀</button>
                             <span id="current-date-label">Aujourd'hui</span>
                             <button class="secondary" id="next-day" style="padding:0.4rem 0.8rem;">▶</button>
                         </div>
                     </div>
-                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem; padding:0.8rem 1.2rem;">⚙️ Capital</button>
+                    <button id="btn-open-settings-modal" class="secondary" style="font-size:1.3rem;">⚙️ Capital</button>
                 </div>
 
-                <div class="points-hero">
-                    <div class="circular-gauge">
-                        <svg viewBox="0 0 120 120">
-                            <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
-                            <circle class="progress-circle" id="gauge-progress" cx="60" cy="60" r="54"></circle>
-                        </svg>
-                        <div class="gauge-inner">
-                            <span class="number" id="remaining-points-val">30</span>
-                            <span class="label">Restants</span>
-                        </div>
+                <div class="points-summary-grid">
+                    <div class="metric-card">
+                        <h3>Points Restants</h3>
+                        <div class="value" id="remaining-points-val">30</div>
+                        <span style="font-size:1.3rem; color:var(--text-muted);" id="budget-info">sur 30 pts</span>
                     </div>
-                    <div class="hero-stats">
-                        <div class="stat-badge">
-                            <span>Capital du jour</span>
-                            <strong id="budget-info">30 pts</strong>
-                        </div>
-                        <div class="stat-badge">
-                            <span>Calories du jour</span>
-                            <strong id="total-calories-val">0 kcal</strong>
-                        </div>
+                    <div class="metric-card" style="background:var(--border);">
+                        <h3>Calories du jour</h3>
+                        <div class="value" id="total-calories-val" style="color:var(--text-main);">0 kcal</div>
+                        <span style="font-size:1.3rem; color:var(--text-muted);" id="target-calories-info">Objectif: 2000 kcal</span>
                     </div>
                 </div>
 
@@ -573,9 +470,9 @@
             </div>
 
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.6rem;">
-                    <h3 style="margin:0; font-size:1.8rem;">Aliments consommés</h3>
-                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0;">Aliments consommés</h3>
+                    <button class="secondary" id="btn-goto-scanner" style="font-size:1.3rem;">➕ Ajouter un aliment</button>
                 </div>
                 <ul class="food-list" id="daily-food-list">
                     <li style="text-align:center; padding:2rem; color:var(--text-muted);">Aucun aliment enregistré pour cette date.</li>
@@ -586,35 +483,35 @@
         <!-- ONGLET 2 : SCANNER & CALCULATEUR -->
         <section id="tab-scanner" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0; font-size:1.8rem;">Scanner un code-barres</h2>
+                <h2 style="margin-top:0;">Scanner ou Rechercher un aliment</h2>
                 
                 <div id="scanner-container">
                     <video id="scanner-video" playsinline muted autoplay></video>
                 </div>
 
-                <div style="display:flex; gap:1rem; margin-bottom:1.8rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
                     <button id="btn-start-scanner">📷 Démarrer la caméra</button>
-                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter</button>
+                    <button class="secondary" id="btn-stop-scanner" style="display:none;">Arrêter la caméra</button>
                     <label class="btn secondary" style="cursor:pointer; margin:0;">
-                        📁 Importer photo
+                        📁 Importer une photo code-barres
                         <input type="file" id="barcode-file-input" accept="image/*" style="display:none;">
                     </label>
                 </div>
 
-                <div class="form-group" style="margin-bottom:0;">
-                    <label for="manual-barcode">Recherche par code-barres (EAN/UPC)</label>
+                <div class="form-group">
+                    <label for="manual-barcode">Ou saisir le code-barres (EAN/UPC)</label>
                     <div style="display:flex; gap:1rem;">
                         <input type="text" id="manual-barcode" placeholder="Ex: 3017620422003">
-                        <button id="btn-search-barcode">Chercher</button>
+                        <button id="btn-search-barcode">Rechercher</button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0; font-size:1.8rem;">Calculateur & Saisie manuelle</h3>
+                <h3 style="margin-top:0;">Calculateur & Saisie manuelle libre</h3>
                 <div class="form-group">
-                    <label for="manual-name">Nom de l'aliment / plat</label>
-                    <input type="text" id="manual-name" placeholder="Ex: Poulet grillé, Yaourt nature...">
+                    <label for="manual-name">Nom du produit / plat</label>
+                    <input type="text" id="manual-name" placeholder="Ex: Yaourt nature, Poulet grillé...">
                 </div>
                 <div class="row">
                     <div class="form-group">
@@ -645,19 +542,19 @@
                     <input type="number" id="manual-serving" value="100">
                 </div>
 
-                <div style="background:var(--primary-light); padding:1.4rem; border-radius:var(--radius); margin-bottom:1.8rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:600;">Points pour cette portion :</span>
-                    <span id="preview-calculated-points" style="font-size:2.2rem; font-weight:800; color:var(--primary);">4 pts</span>
+                <div style="background:var(--primary-light); padding:1.2rem; border-radius:var(--radius); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600;">Points calculés pour cette portion :</span>
+                    <span id="preview-calculated-points" style="font-size:2rem; font-weight:700; color:var(--primary);">4 pts</span>
                 </div>
 
-                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal</button>
+                <button id="btn-add-to-journal" style="width:100%;">Ajouter au journal du jour</button>
             </div>
         </section>
 
         <!-- ONGLET 3 : PROFIL & OBJECTIFS -->
         <section id="tab-profile" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0; font-size:1.8rem;">Préférences & Apparence</h2>
+                <h2 style="margin-top:0;">Personnalisation & Apparence</h2>
                 <div class="form-group">
                     <label for="input-firstname">Votre Prénom</label>
                     <input type="text" id="input-firstname" placeholder="Ex: Thomas, Julie...">
@@ -674,8 +571,8 @@
             </div>
 
             <div class="card">
-                <h2 style="margin-top:0; font-size:1.8rem;">Calculateur de Recommandations</h2>
-                <p style="color:var(--text-muted); font-size:1.4rem; margin-bottom:1.6rem;">Calcul automatique de votre capital selon la formule Mifflin-St Jeor.</p>
+                <h2 style="margin-top:0;">Calculateur de Profil & Objectifs</h2>
+                <p style="color:var(--text-muted); font-size:1.4rem;">Calculez automatiquement votre capital de points et vos besoins caloriques selon vos caractéristiques physiques (formule Mifflin-St Jeor).</p>
                 
                 <div class="row">
                     <div class="form-group">
@@ -703,62 +600,62 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-target-weight">Poids cible (kg)</label>
+                    <label for="profile-target-weight">Poids idéal recherché (Cible en kg)</label>
                     <input type="number" id="profile-target-weight" value="70">
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-activity">Niveau d'activité</label>
+                    <label for="profile-activity">Niveau d'activité physique</label>
                     <select id="profile-activity">
-                        <option value="1.2">Sédentaire</option>
-                        <option value="1.375">Légèrement actif</option>
-                        <option value="1.55" selected>Modérément actif</option>
-                        <option value="1.725">Très actif</option>
+                        <option value="1.2">Sédentaire (peu ou pas d'exercice)</option>
+                        <option value="1.375">Légèrement actif (exercice léger 1-3j/sem)</option>
+                        <option value="1.55" selected>Modérément actif (exercice modéré 3-5j/sem)</option>
+                        <option value="1.725">Très actif (exercice intense 6-7j/sem)</option>
                     </select>
                 </div>
 
-                <button id="btn-calculate-profile" style="width:100%;">Calculer mes objectifs</button>
+                <button id="btn-calculate-profile" style="width:100%;">Calculer mes recommandations & Objectif</button>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0; font-size:1.8rem;">Suivi de l'évolution du poids</h3>
-                <div style="display:flex; justify-content:space-between; margin-bottom:1.6rem; font-size:1.4rem;">
-                    <div>Départ : <strong id="stat-start-weight">80 kg</strong></div>
+                <h3 style="margin-top:0;">Suivi de l'évolution du poids</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; font-size:1.5rem;">
+                    <div>Poids de départ : <strong id="stat-start-weight">80 kg</strong></div>
                     <div>Cible : <strong id="stat-target-weight">70 kg</strong></div>
                     <div>Perte : <strong id="stat-diff-weight" style="color:var(--primary);">0 kg</strong></div>
                 </div>
                 <div class="form-group">
-                    <label for="new-weight-log">Enregistrer une pesée (kg)</label>
+                    <label for="new-weight-log">Enregistrer une pesée aujourd'hui (kg)</label>
                     <div style="display:flex; gap:1rem;">
                         <input type="number" step="0.1" id="new-weight-log" placeholder="Ex: 79.2">
                         <button id="btn-log-weight">Ajouter</button>
                     </div>
                 </div>
-                <div id="weight-history-container" style="margin-top:1.6rem;"></div>
+                <div id="weight-history-container" style="margin-top:1.5rem;"></div>
             </div>
         </section>
 
         <!-- ONGLET 4 : BILAN MENSUEL -->
         <section id="tab-monthly" class="tab-content">
             <div class="card">
-                <h2 style="margin-top:0; font-size:1.8rem;" id="monthly-title">Bilan du mois</h2>
-                <div class="points-hero" style="background:var(--border);">
-                    <div style="text-align:center; flex:1;">
-                        <span style="font-size:1.3rem; color:var(--text-muted);">Moyenne points / jour</span>
-                        <div style="font-size:2.6rem; font-weight:800; color:var(--primary);" id="monthly-avg-points">0</div>
+                <h2 style="margin-top:0;" id="monthly-title">Bilan du mois</h2>
+                <div class="points-summary-grid">
+                    <div class="metric-card">
+                        <h3>Moyenne Points / jour</h3>
+                        <div class="value" id="monthly-avg-points">0</div>
                     </div>
-                    <div style="text-align:center; flex:1; border-left:1px solid var(--border);">
-                        <span style="font-size:1.3rem; color:var(--text-muted);">Moyenne calories / jour</span>
-                        <div style="font-size:2.6rem; font-weight:800;" id="monthly-avg-calories">0 kcal</div>
+                    <div class="metric-card" style="background:var(--border);">
+                        <h3>Moyenne Calories / jour</h3>
+                        <div class="value" id="monthly-avg-calories" style="color:var(--text-main);">0 kcal</div>
                     </div>
                 </div>
 
-                <h3 style="margin-top:2rem; font-size:1.6rem;">Calendrier d'activité</h3>
+                <h3 style="margin-top:2rem;">Calendrier d'activité du mois</h3>
                 <div class="heatmap-grid" id="monthly-heatmap"></div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0; font-size:1.8rem;">Export des données</h3>
+                <h3 style="margin-top:0;">Export des données</h3>
                 <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                     <button class="secondary" id="btn-export-json">Exporter en JSON</button>
                     <button class="secondary" id="btn-export-csv">Exporter en CSV</button>
@@ -790,13 +687,13 @@
     <!-- MODAL PARAMÈTRES / CAPITAL -->
     <div class="modal" id="settings-modal">
         <div class="modal-content">
-            <h3 style="margin-top:0; font-size:1.8rem;">Modifier le Capital</h3>
+            <h3 style="margin-top:0;">Modifier le Capital Journalier</h3>
             <div class="form-group">
-                <label for="modal-daily-points">Points max / jour</label>
+                <label for="modal-daily-points">Points maximum / jour</label>
                 <input type="number" id="modal-daily-points" value="30" min="10" max="200">
             </div>
             <div class="form-group">
-                <label for="modal-daily-calories">Calories max / jour (kcal)</label>
+                <label for="modal-daily-calories">Objectif calories / jour (kcal)</label>
                 <input type="number" id="modal-daily-calories" value="2000" min="500" max="5000">
             </div>
             <div style="display:flex; justify-content:flex-end; gap:1rem;">
@@ -920,7 +817,7 @@
             
             const todayLabel = state.currentDate === new Date().toISOString().split('T')[0] 
                 ? "Aujourd'hui" 
-                : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', month: 'short', day: 'numeric' });
+                : new Date(state.currentDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('current-date-label').textContent = todayLabel;
 
             const logs = state.getTodayLogs();
@@ -940,15 +837,10 @@
             const remaining = Math.max(0, state.dailyPointsTarget - totalPts);
 
             document.getElementById('remaining-points-val').textContent = remaining;
-            document.getElementById('budget-info').textContent = `${state.dailyPointsTarget} pts`;
+            document.getElementById('budget-info').textContent = `sur ${state.dailyPointsTarget} pts`;
             document.getElementById('total-calories-val').textContent = `${Math.round(totalCal)} kcal`;
+            document.getElementById('target-calories-info').textContent = `Objectif: ${state.dailyCaloriesTarget} kcal`;
 
-            // Jauge circulaire
-            const circumference = 339.29;
-            const progress = Math.min(1, totalPts / state.dailyPointsTarget);
-            document.getElementById('gauge-progress').style.strokeDashoffset = circumference - (progress * circumference);
-
-            // Macros
             document.getElementById('macro-p-val').textContent = `${Math.round(totalP)}g`;
             document.getElementById('macro-g-val').textContent = `${Math.round(totalG)}g`;
             document.getElementById('macro-l-val').textContent = `${Math.round(totalL)}g`;
@@ -970,7 +862,7 @@
                             <p>${item.serving}g • ${Math.round(item.calories * item.serving/100)} kcal</p>
                         </div>
                         <div class="food-actions">
-                            <span class="badge-pts">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
+                            <span class="badge">${Math.round(item.points * item.serving/100 * 10)/10} pts</span>
                             <button class="secondary" onclick="removeFoodItem(${idx})" style="padding:0.4rem 0.8rem; font-size:1.2rem;">✕</button>
                         </div>
                     </li>
